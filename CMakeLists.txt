@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 
 include(env.cmake)
 include(version.cmake)
@@ -53,9 +53,9 @@ set (SOURCES_TEST
       )
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++14 -Wall")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++17 -Wall")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
 else()
   message(FATAL_ERROR "Unknown compiler, compiler id = ${CMAKE_CXX_COMPILER_ID}")
 endif()

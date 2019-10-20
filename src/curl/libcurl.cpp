@@ -15,6 +15,9 @@
 #include <mutex>
 #include <cstdint>
 
+// boost
+#include <boost/assert.hpp>
+
 // curl
 #include <curl/curl.h>
 
@@ -27,7 +30,7 @@ using TCurlCleaner = std::function<void(CURL *)>;
 using CurlPtr = std::unique_ptr<CURL, TCurlCleaner>;
 auto CurlCleaner(CURL *p)
 {
-  assert(p && "Is not nullptr curl pointer");
+  BOOST_ASSERT_MSG( p, "Is null pointer" );
   curl_easy_cleanup(p);
 }
 using TCurlListCleaner = std::function<void(curl_slist *)>;
@@ -39,6 +42,8 @@ auto CurlListCleaner(curl_slist *t)
     curl_slist_free_all(t);
   }
 }
+
+using Locker = std::unique_lock<std::mutex>;
 
 /** @class CurlGlobalInitializator
   * @brief the initalizator class
@@ -99,28 +104,28 @@ public:
   //----------------------------------------------------------------------------------------
   void verbose(bool enable)
   {
-    std::unique_lock<std::mutex> locker(lock_);
+    Locker locker(lock_);
 
     curlSetOpt(CURLOPT_VERBOSE, static_cast<long>(enable), "LibCurl::verbose", "CURLOPT_VERBOSE");
   }
   //----------------------------------------------------------------------------------------
   void setTimeOut(std::uint32_t t)
   {
-    std::unique_lock<std::mutex> locker(lock_);
+    Locker locker(lock_);
 
     curlSetOpt(CURLOPT_TIMEOUT, static_cast<long>(t), "LibCurl::setTimeOut", "CURLOPT_TIMEOUT");
   }
   //----------------------------------------------------------------------------------------
   void setConnTimeOut(std::uint32_t t)
   {
-    std::unique_lock<std::mutex> locker(lock_);
+    Locker locker(lock_);
 
     curlSetOpt(CURLOPT_CONNECTTIMEOUT, static_cast<long>(t), "LibCurl::setConnTimeOut", "CURLOPT_CONNECTTIMEOUT");
   }
   //----------------------------------------------------------------------------------------
   void setUserPassw(const std::string &login, const std::string &passw)
   {
-    std::unique_lock<std::mutex> locker(lock_);
+    Locker locker(lock_);
 
     curlSetOpt(CURLOPT_USERNAME, login.data(), "LibCurl::setUserPassw", "CURLOPT_USERNAME");
     curlSetOpt(CURLOPT_PASSWORD, passw.data(), "LibCurl::setUasePassw", "CURLOPT_PASSWORD");
@@ -128,7 +133,7 @@ public:
   //----------------------------------------------------------------------------------------
   void setHeaders(const std::string &encoding, const Headers &h)
   {
-    std::unique_lock<std::mutex> locker(lock_);
+    Locker locker(lock_);
 
     curlSetOpt(CURLOPT_ENCODING, encoding.c_str(), "LibCurl::setHeaders", "CURLOPT_ENCODING");
 
@@ -145,7 +150,7 @@ public:
   //----------------------------------------------------------------------------------------
   std::tuple<std::string, long> get(const std::string &url)
   {
-    std::unique_lock<std::mutex> locker(lock_);
+    Locker locker(lock_);
 
     curlSetOpt(CURLOPT_URL, url.data(), "LibCurl::get", "CURLOPT_URL");
     std::array<char, CURL_ERROR_SIZE> errBuffer;
@@ -182,7 +187,7 @@ public:
   //----------------------------------------------------------------------------------------
   std::tuple<std::string, long> post(const std::string &url)
   {
-    std::unique_lock<std::mutex> locker(lock_);
+    Locker locker(lock_);
 
     curlSetOpt(CURLOPT_URL, url.data(), "LibCurl::post", "CURLOPT_URL");
     std::array<char, CURL_ERROR_SIZE> errBuffer;
@@ -221,7 +226,7 @@ public:
   //----------------------------------------------------------------------------------------
   std::string escapeUrl(const std::string &url)
   {
-    std::unique_lock<std::mutex> locker(lock_);
+    Locker locker(lock_);
 
     char *ptr = curl_easy_escape(curl_.get(), url.data(), url.size());
     std::string result{ ptr };
@@ -303,42 +308,42 @@ LibCurl::LibCurl()
 
 }
 //------------------------------------------------------------------------------
-std::tuple<std::string, long> LibCurl::get(const std::string &url)
+std::tuple<std::string, long> LibCurl::Get(const std::string &url, const std::string&)
 {
   return impl_->get(url);
 }
 //------------------------------------------------------------------------------
-std::tuple<std::string, long> LibCurl::post(const std::string &url)
+std::tuple<std::string, long> LibCurl::Post(const std::string &url, const std::string&)
 {
   return impl_->post(url);
 }
 //------------------------------------------------------------------------------
-void LibCurl::verbose(bool enable)
+void LibCurl::SetVerbose(bool enable)
 {
   impl_->verbose(enable);
 }
 //------------------------------------------------------------------------------
-void LibCurl::setTimeOut(std::uint32_t t)
+void LibCurl::SetTimeOut(std::uint32_t t)
 {
   impl_->setTimeOut(t);
 }
 //------------------------------------------------------------------------------
-void LibCurl::setConnTimeOut(std::uint32_t t)
+void LibCurl::SetConnTimeOut(std::uint32_t t)
 {
   impl_->setConnTimeOut(t);
 }
 //------------------------------------------------------------------------------
-void LibCurl::setHeaders(const std::string &encoding, const Headers &h)
+void LibCurl::SetHeaders(const std::string &encoding, const Headers &h)
 {
   impl_->setHeaders(encoding, h);
 }
 //------------------------------------------------------------------------------
-void LibCurl::setUserPassw(const std::string &login, const std::string &passw)
+void LibCurl::SetUserPassw(const std::string &login, const std::string &passw)
 {
   impl_->setUserPassw(login, passw);
 }
 //------------------------------------------------------------------------------
-std::string LibCurl::escapeUrl(const std::string &url)
+std::string LibCurl::EscapeUrl(const std::string &url)
 {
   return impl_->escapeUrl(url);
 }
