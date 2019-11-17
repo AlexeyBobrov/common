@@ -4,25 +4,32 @@
  *  @date 12.09.2016
  */
 // declare
-#include "logger/logger.h"
+#include <logger/logger.h>
 
 // std
-#include <memory>
 #include <array>
-#include <string>
 #include <functional>
+#include <memory>
+#include <string>
 
 // boost
+//  common
+#include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
+
 //  logger
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sinks.hpp>
 #include <boost/log/attributes.hpp>
 #include <boost/log/core.hpp>
-#include <boost/log/sources/severity_feature.hpp>
+#include <boost/log/sinks.hpp>
 #include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/sources/severity_feature.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/expressions.hpp>
+
 //  memory
-#include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
 //  ptree
 #include <boost/property_tree/ptree.hpp>
 //  date_time
@@ -31,9 +38,15 @@
 #include <boost/core/null_deleter.hpp>
 
 // this
-#include "logger/config.h"
+#include <logger/config.h>
+#include <logger/utility.h>
 
-BOOST_LOG_GLOBAL_LOGGER_INIT(common_logger, common::logger::SeverityLogger)
+// error
+#include <error/error.h>
+
+#include <boost/phoenix/bind.hpp>
+
+BOOST_LOG_GLOBAL_LOGGER_INIT(Logger, common::logger::SeverityLogger)
 {
   common::logger::SeverityLogger lg;
   return lg;
@@ -43,115 +56,159 @@ namespace common
 {
 namespace logger
 {
-//-------------------------------------------------------------------------------------------- 
+
+BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", Severity);
+BOOST_LOG_ATTRIBUTE_KEYWORD(tag_attr, "Tag", std::string);
+
+//--------------------------------------------------------------------------------------------
 namespace sinks = boost::log::sinks;
 namespace sources = boost::log::sources;
 namespace keywords = boost::log::keywords;
 namespace attrs = boost::log::attributes;
 namespace log = boost::log;
-//-------------------------------------------------------------------------------------------- 
-std::array<std::string, static_cast<int>(Severity::trace) + 1> text_sev
-{
-  "INFO", "WARNING", "ERROR", "CRITICAL", "FATAL", "DEBUG", "TRACE"
-};
-//-------------------------------------------------------------------------------------------- 
+
+//--------------------------------------------------------------------------------------------
 using sev_log_t = sources::severity_logger_mt<Severity>;
 using file_sink_t = sinks::asynchronous_sink<sinks::text_file_backend>;
 using file_sink_ptr_t = boost::shared_ptr<file_sink_t>;
 using debug_sink_t = sinks::asynchronous_sink<sinks::text_ostream_backend>;
 using debug_sink_ptr_t = boost::shared_ptr<debug_sink_t>;
 using debug_sink_ptr_t = boost::shared_ptr<debug_sink_t>;
-//-------------------------------------------------------------------------------------------- 
+//--------------------------------------------------------------------------------------------
+template <typename Attribute>
+void AddAttribute(std::string_view name)
+{
+  auto it = log::core::get()->add_global_attribute(name.data(), Attribute() );
+  if (!it.second)
+  {
+    THROW_COMMON_ERROR((boost::format("Is not added attribute '%1%'") % name).str());
+  }
+}
+
+template <typename Type>
+void Print(std::ostringstream& ss, const Type& value)
+{
+  ss << "[" << value << "]";
+}
+
+template <typename AttributeType>
+void FormatAttribute(const config::Configuration::Attributes &attrs, std::string_view name,
+                                                const log::record_view &record, std::ostringstream& ss)
+{
+  if (attrs.count(name))
+  {
+    const auto &value = log::extract<AttributeType>(name.data(), record);
+    if (value)
+    {
+      Print(std::ref(ss), value.get());
+    }
+  }
+}
+//--------------------------------------------------------------------------------------------
 // configure attributes
-void init_attrs(const config::Configuration &conf)
-{ 
+void InitAttributes(const config::Configuration &conf)
+{
   const auto &attrs = conf.attributes;
 
-  for (const auto &attr: attrs)
+  for (const auto &attr : attrs)
   {
     using config::Configuration;
-    
+
     if (attr.second)
     {
       if (attr.first == Configuration::AttributesValues::process_id)
-      {       
-        log::core::get()->add_global_attribute(Configuration::AttributesValues::process_id.data(), log::attributes::current_process_id());
+      {
+        AddAttribute<log::attributes::current_process_id>(Configuration::AttributesValues::process_id);
       }
       else if (attr.first == Configuration::AttributesValues::thread_id)
       {
-        log::core::get()->add_global_attribute(Configuration::AttributesValues::thread_id.data(), log::attributes::current_thread_id());
+        AddAttribute<log::attributes::current_thread_id>(Configuration::AttributesValues::thread_id);
       }
       else if (attr.first == Configuration::AttributesValues::timestamp)
       {
         if (conf.time_type == Configuration::Time::utc)
-        {         
-          log::core::get()->add_global_attribute(Configuration::AttributesValues::timestamp.data(), log::attributes::utc_clock());
+        {
+          AddAttribute<log::attributes::utc_clock>(Configuration::AttributesValues::timestamp);
         }
         else if (conf.time_type == Configuration::Time::local)
         {
-          log::core::get()->add_global_attribute(Configuration::AttributesValues::timestamp.data(), log::attributes::local_clock());
+          AddAttribute<log::attributes::local_clock>(Configuration::AttributesValues::timestamp);
         }
         else
         {
-          throw std::runtime_error("[logger::init_attributes]: unknown time type of log record.");
+          THROW_COMMON_ERROR("unknown time type of log record.");
         }
+      }
+      else if (attr.first == Configuration::AttributesValues::filename)
+      {
+      }
+      else if (attr.first == Configuration::AttributesValues::function)
+      {
+      }
+      else if (attr.first == Configuration::AttributesValues::line)
+      {
       }
       else
       {
-        throw std::runtime_error("[logger::init_attributes]: unknown name attribute '" + attr.first + "'");
+        THROW_COMMON_ERROR((boost::format("unknown name attribute '%1%'") % attr.first ).str());
       }
     }
   }
 }
-//-------------------------------------------------------------------------------------------- 
+//--------------------------------------------------------------------------------------------
 // format message
-void format(const config::Configuration &conf, const log::record_view &record, log::formatting_ostream &os)
-{ 
+void Format(const config::Configuration &conf, const log::record_view &record, log::formatting_ostream &os)
+{
   auto sev = record.attribute_values()["Severity"].extract<Severity>().get();
-  auto text = text_sev[static_cast<int>(sev)];
+  auto text = utility::SeverityToText(sev);
   
   std::ostringstream tmp;
 
-  auto format_attr = [&tmp](const auto &val)
-  {
-    tmp << "[" << val << "]";
-  };
-   
   const auto &attrs = conf.attributes;
+
+  FormatAttribute<boost::posix_time::ptime>(std::cref(attrs), 
+      config::Configuration::AttributesValues::timestamp, 
+      std::cref(record), std::ref(tmp));
   
-  if (attrs.at(config::Configuration::AttributesValues::timestamp))
-  {
-    const auto timestamp = log::extract<boost::posix_time::ptime>("TimeStamp", record).get();
-    format_attr(boost::posix_time::to_iso_extended_string(timestamp));
-  }
+  FormatAttribute<log::attributes::current_thread_id::value_type>(std::cref(attrs), 
+      config::Configuration::AttributesValues::thread_id, 
+      std::cref(record), std::ref(tmp));
 
-  if (attrs.at(config::Configuration::AttributesValues::thread_id))
-  {
-    const auto thread_id = log::extract<log::attributes::current_thread_id::value_type>(
-        config::Configuration::AttributesValues::thread_id.data(), record).get();
-    format_attr(thread_id);
-  }
-
-  if (attrs.at(config::Configuration::AttributesValues::process_id))
-  {
-    const auto process_id = log::extract<log::attributes::current_process_id::value_type>(
-        config::Configuration::AttributesValues::process_id.data(), record).get();
-    format_attr(process_id);
-  } 
+  FormatAttribute<log::attributes::current_process_id::value_type>(std::cref(attrs), 
+      config::Configuration::AttributesValues::process_id, 
+      std::cref(record), std::ref(tmp));
   
-  format_attr(text);
-
+  FormatAttribute<std::string>(std::cref(attrs), 
+      config::Configuration::AttributesValues::filename, 
+      std::cref(record), 
+      std::ref(tmp));
+  
+  FormatAttribute<std::string>(std::cref(attrs), 
+      config::Configuration::AttributesValues::function, 
+      std::cref(record), std::ref(tmp));
+  
+  FormatAttribute<int>(std::cref(attrs), 
+      config::Configuration::AttributesValues::line, 
+      std::cref(record), std::ref(tmp)); 
+  
+  Print(std::ref(tmp), text);
+  
   const auto msg = record.attribute_values()["Message"].extract<std::string>().get();
   tmp << ": " << msg;
 
   os << tmp.str();
-  
 }
-//-------------------------------------------------------------------------------------------- 
-file_sink_ptr_t createFileSink(const config::Configuration &conf)
+//--------------------------------------------------------------------------------------------
+bool my_filter( const log::value_ref<  Severity, tag::severity > & level,
+    const log::value_ref< std::string, tag::tag_attr > &, Severity confLevel  )
+{
+  return level <= confLevel;
+}
+//--------------------------------------------------------------------------------------------
+file_sink_ptr_t CreateFileSink(const config::Configuration &conf)
 {
   namespace fs = boost::filesystem;
-  
+
   fs::path filename{conf.workdir};
   filename /= conf.filename;
 
@@ -164,79 +221,86 @@ file_sink_ptr_t createFileSink(const config::Configuration &conf)
   {
     backend = boost::make_shared<file_text_backend_t>(
         keywords::file_name = filename.string(),
-        keywords::time_based_rotation = sinks::file::rotation_at_time_interval(
-          boost::posix_time::seconds(conf.rotation.period)));
+        keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::seconds(conf.rotation.period)));
   }
   else if (conf.rotation.type == config::Configuration::Rotation::Type::size)
   {
-    backend = boost::make_shared<file_text_backend_t>(
-        keywords::file_name = filename.string(),
-        keywords::rotation_size = conf.rotation.size
-        );
+    backend = boost::make_shared<file_text_backend_t>(keywords::file_name = filename.string(), keywords::rotation_size = conf.rotation.size);
   }
   else
   {
-    throw std::runtime_error("[logger::createFileSink]: unknown type rotation.");
+    THROW_COMMON_ERROR("unknown type rotation");
   }
 
+  backend->auto_flush();
   auto tmp = boost::make_shared<file_sink_t>(backend);
-  auto fn = std::bind(format, conf, std::placeholders::_1, std::placeholders::_2);
-  tmp->set_formatter(fn);
+  const auto level = utility::SeverityFromText(conf.level.data());
 
+  tmp->set_filter(boost::phoenix::bind(&my_filter, severity.or_none(), tag_attr.or_none(), level));
+
+  auto fn = std::bind(Format, conf, std::placeholders::_1, std::placeholders::_2);
+  tmp->set_formatter(fn);
+  
   return tmp;
 }
-//-------------------------------------------------------------------------------------------- 
-debug_sink_ptr_t createDebugSink(const config::Configuration &conf)
+//--------------------------------------------------------------------------------------------
+debug_sink_ptr_t CreateDebugSink(const config::Configuration &conf)
 {
   auto debug_backend = boost::make_shared<log::sinks::text_ostream_backend>();
   debug_backend->add_stream(boost::shared_ptr<std::ostream>(&std::clog, boost::null_deleter()));
   debug_backend->auto_flush();
   auto sink = boost::make_shared<debug_sink_t>(debug_backend);
-  auto fn = std::bind(format, conf, std::placeholders::_1, std::placeholders::_2);
+  const auto level = utility::SeverityFromText(conf.level);
+  sink->set_filter(boost::phoenix::bind(&my_filter, severity.or_none(), tag_attr.or_none(), level));
+  auto fn = std::bind(Format, conf, std::placeholders::_1, std::placeholders::_2);
   sink->set_formatter(fn);
-  
+
   return sink;
 }
-//-------------------------------------------------------------------------------------------- 
+//--------------------------------------------------------------------------------------------
 // init logger
-void initLog(const config::Configuration &conf)
+void InitLog(const config::Configuration &conf)
 {
+
   // add attributes
-  init_attrs(conf);
+  InitAttributes(conf);
+
+  log::add_common_attributes(); 
 
   auto core = log::core::get();
 
   // create file sink
-  auto file_sink = createFileSink(conf);
- 
+  auto file_sink = CreateFileSink(conf);
+
   if (conf.stdoutput)
   {
     // creating debug log
-    auto debug_sink = createDebugSink(conf);
+    auto debug_sink = CreateDebugSink(conf);
 
     core->add_sink(debug_sink);
   }
 
   core->add_sink(file_sink);
 }
-//-------------------------------------------------------------------------------------------- 
+//--------------------------------------------------------------------------------------------
 /** @brief implementation of the class Logger */
-void Logger::init()
+void Logger::Init()
 {
   // default settings
-  initLog(config::Configuration()); 
+  InitLog(config::Configuration());
 }
-//-------------------------------------------------------------------------------------------- 
-void Logger::initFromFile(const boost::filesystem::path &filename)
+//--------------------------------------------------------------------------------------------
+void Logger::InitFromFile(const boost::filesystem::path &filename)
 {
-  const auto conf = config::readFile(filename);
-  initLog(conf);
+  const auto conf = config::ReadFile(filename);
+  InitLog(conf);
 }
 //--------------------------------------------------------------------------------------------
 Logger::~Logger()
 {
-  log::core::get()->remove_all_sinks();
+  log::core::get()->flush();
+  log::core::get()->remove_all_sinks(); 
 }
 //--------------------------------------------------------------------------------------------
-}
-}
+}  // namespace logger
+}  // namespace common

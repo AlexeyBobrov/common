@@ -12,7 +12,7 @@ AlignTrailingComments: true
 AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: Never
+AllowShortBlocksOnASingleLine: false #Never
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: All
 AllowShortLambdasOnASingleLine: All
@@ -69,19 +69,19 @@ IncludeBlocks:   Regroup
 IncludeCategories:
   - Regex:           '^<ext/.*\.h>'
     Priority:        2
-    SortPriority:    0
+ #   SortPriority:    0
   - Regex:           '^<.*\.h>'
     Priority:        1
-    SortPriority:    0
+ #   SortPriority:    0
   - Regex:           '^<.*'
     Priority:        2
-    SortPriority:    0
+ #   SortPriority:    0
   - Regex:           '.*'
     Priority:        3
-    SortPriority:    0
+ #   SortPriority:    0
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentCaseLabels: true
-IndentGotoLabels: true
+#IndentGotoLabels: true
 IndentPPDirectives: None
 IndentWidth:     2
 IndentWrappedFunctionNames: false
@@ -105,34 +105,34 @@ PenaltyBreakTemplateDeclaration: 10
 PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 200
 PointerAlignment: Left
-RawStringFormats:
-  - Language:        Cpp
-    Delimiters:
-      - cc
-      - CC
-      - cpp
-      - Cpp
-      - CPP
-      - 'c++'
-      - 'C++'
-    CanonicalDelimiter: ''
-    BasedOnStyle:    google
-  - Language:        TextProto
-    Delimiters:
-      - pb
-      - PB
-      - proto
-      - PROTO
-    EnclosingFunctions:
-      - EqualsProto
-      - EquivToProto
-      - PARSE_PARTIAL_TEXT_PROTO
-      - PARSE_TEST_PROTO
-      - PARSE_TEXT_PROTO
-      - ParseTextOrDie
-      - ParseTextProtoOrDie
-    CanonicalDelimiter: ''
-    BasedOnStyle:    google
+#RawStringFormats:
+#  - Language:        Cpp
+#    Delimiters:
+#      - cc
+#      - CC
+#      - cpp
+#      - Cpp
+#      - CPP
+#      - 'c++'
+#      - 'C++'
+#    CanonicalDelimiter: ''
+#    BasedOnStyle:    google
+#  - Language:        TextProto
+#    Delimiters:
+#      - pb
+#      - PB
+#      - proto
+#      - PROTO
+#    EnclosingFunctions:
+#      - EqualsProto
+#      - EquivToProto
+#      - PARSE_PARTIAL_TEXT_PROTO
+#      - PARSE_TEST_PROTO
+#      - PARSE_TEXT_PROTO
+#      - ParseTextOrDie
+#      - ParseTextProtoOrDie
+#    CanonicalDelimiter: ''
+#    BasedOnStyle:    google
 ReflowComments:  true
 SortIncludes:    true
 SortUsingDeclarations: true
@@ -145,7 +145,7 @@ SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: true
-SpaceInEmptyBlock: false
+#SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 2
 SpacesInAngles:  false

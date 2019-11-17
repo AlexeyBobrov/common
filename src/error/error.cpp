@@ -6,12 +6,19 @@
 // this
 #include <error/error.h>
 
+// boost
+#include <boost/format.hpp>
+
 namespace common
 {
 namespace error
 {
+// Error division by zero in line 30, function main(), file main.cpp
+static constexpr auto FormatCommonError = "%1% in line %2%, function %3%, file %4%\n";
+
 Error::Error(const std::string& funcName, std::uint32_t line, const std::string& fileName, const std::string& text)
- : funcName_(funcName)
+ : std::runtime_error( ( boost::format( FormatCommonError ) % text % line % funcName % fileName ).str() )
+ , funcName_(funcName)
  , line_(line)
  , fileName_(fileName)
  , text_(text)

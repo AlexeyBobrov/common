@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+	<logger>
+		<stdout>true</stdout>
+		<!-- время отображаемое в логе (utc, или локальное) -->
+		<time>utc</time>
+                <workdir>bin/log/</workdir>
+                <filename>test_log_%Y-%m-%d_%H-%M-%S.%N.log</filename>
+                <level>debug</level>
+		<rotation>
+			<!-- type=time,size-->
+			<type>time</type>
+			<!-- seconds -->
+			<period>3600</period>
+			<!-- размер файла, для size в МБ -->
+			<size>10</size>
+		</rotation>
+		<attributes>
+			<threadid>true</threadid>
+                        <processid>true</processid>
+                        <debug>
+                          <file>true</file>
+                          <function>true</function>
+                          <line>line</line>
+                        </debug>
+		</attributes>
+	</logger>
+</document>

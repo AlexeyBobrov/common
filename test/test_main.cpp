@@ -3,9 +3,10 @@
  * @author Bobrov A.E.
  * @date 20.09.2016
  */
-#define BOOST_TEST_MODULE common_test
+#include <gtest/gtest.h>
 
-// boost
-#include <boost/test/included/unit_test.hpp>
-
-
+int main(int argc, char *argv[])
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

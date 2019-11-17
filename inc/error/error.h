@@ -7,12 +7,13 @@
 
 #include <cstddef>
 #include <string>
+#include <stdexcept>
 
 namespace common
 {
 namespace error
 {
-class Error
+class Error : public std::runtime_error
 {
  public:
   Error(const std::string& funcName, std::uint32_t line, const std::string& fileName, const std::string& text);
@@ -33,4 +34,4 @@ class Error
 
 
 #define THROW_COMMON_ERROR( text ) \
-  throw common::error::Error( __PRETTY_FUNCTION__, __LINE__, __FILE__, text )\
+  throw common::error::Error( __PRETTY_FUNCTION__, __LINE__, __FILE__, text )
