@@ -25,7 +25,7 @@ R"(<?xml version="1.0" encoding="UTF-8"?>
     <logger>
       <stdout>true</stdout>
       <time>utc</time>
-      <level>fatal</level>
+      <level>trace</level>
       <workdir>bin</workdir>
       <filename>logger.%N.log</filename>
       <rotation>
@@ -66,9 +66,7 @@ class LogTest : public ::testing::Test
   
   ~LogTest()
   {
-
     fs::remove( confPath_ );
-    
   }
 
   virtual void SetUp() override {}
@@ -89,8 +87,7 @@ TEST_F(LogTest, InitLogger)
 
   ASSERT_TRUE(fs::exists(pathConfig));
 
-  //ASSERT_NO_THROW(logger::Logger::InitFromFile(pathConfig));
-  logger::Logger::InitFromFile(pathConfig);
+  ASSERT_NO_THROW(logger::Logger::InitFromFile(pathConfig));
   auto& log = Logger::get();
   LOG_INFO(log) << "Info";
   LOG_WARNING(log) << "Warning";
@@ -99,10 +96,7 @@ TEST_F(LogTest, InitLogger)
   LOG_FATAL(log) << "Fatal";
   LOG_DEBUG(log) << "Debug";
   LOG_TRACE(log) << "Trace";
-  //
-  boost::log::core::get()->flush();
-  boost::log::core::get()->remove_all_sinks();
-
-
+ // boost::log::core::get()->flush();
+ // boost::log::core::get()->remove_all_sinks();
 }
 

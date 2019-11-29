@@ -24,8 +24,8 @@ enum class Severity
   fatal = 0,
   critical,
   error,
-  info,
   warning,
+  info,
   debug,
   trace
 };

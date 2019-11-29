@@ -26,33 +26,42 @@ namespace logger
 class Logger final
 {
  public:
-  Logger(const Logger &) = delete;
-  Logger &operator=(const Logger &) = delete;
-  ~Logger();
+  /// @brief default initialization logger
   static void Init();
+  /// @brief initialization logger from filename
+  /// @param filename - filename configuration
   static void InitFromFile(const boost::filesystem::path &filename);
 };
 }  // namespace logger
 }  // namespace common
 
+/// @brief boost global logger
 BOOST_LOG_GLOBAL_LOGGER(Logger, common::logger::SeverityLogger)
 
+/// @brief for debug, trace message
 #define BOOST_LOG_SEV_ADD(lg, sv)                                                                             \
   BOOST_LOG_SEV(lg, sv) << boost::log::add_value("Line", __LINE__) << boost::log::add_value("File", __FILE__) \
                         << boost::log::add_value("Function", BOOST_CURRENT_FUNCTION)
 
+/// @brief information message
 #define LOG_INFO(lg) BOOST_LOG_SEV(lg, common::logger::Severity::info)
 
+/// @brief warning message
 #define LOG_WARNING(lg) BOOST_LOG_SEV(lg, common::logger::Severity::warning)
 
+/// @brief error message
 #define LOG_ERROR(lg) BOOST_LOG_SEV(lg, common::logger::Severity::error)
 
+/// @brief critical message
 #define LOG_CRITICAL(lg) BOOST_LOG_SEV(lg, common::logger::Severity::critical)
 
+/// @brief fatal message
 #define LOG_FATAL(lg) BOOST_LOG_SEV(lg, common::logger::Severity::fatal)
 
+/// @brief debug message
 #define LOG_DEBUG(lg) BOOST_LOG_SEV_ADD(lg, common::logger::Severity::debug)
 
+/// @brief trace message
 #define LOG_TRACE(lg) BOOST_LOG_SEV_ADD(lg, common::logger::Severity::trace)
 
 #endif

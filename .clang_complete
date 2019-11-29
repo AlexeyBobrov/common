@@ -1,8 +1,6 @@
 -I.
--I/opt/local/include
--I/opt/local/gcc/gcc-9.2/include/c++/9.2.0/x86_64-linux-gnu
--I/opt/local/gcc/gcc-9.2/include/c++/9.2.0
 -Isrc/
 -Iinc/
 -Ibuild/
--Ibuild/googletest-src/googletest/include
+-I3rdparty/googletest/googletest-src/googletest/include
+-I/opt/local/include

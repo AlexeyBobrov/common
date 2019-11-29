@@ -5,9 +5,9 @@
  */
 // boost
 // property tree
+#include <boost/format.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/format.hpp>
 // string
 #include <boost/algorithm/string.hpp>
 
@@ -15,8 +15,8 @@
 #include <stdexcept>
 
 // this
-#include <logger/config.h>
 #include <error/error.h>
+#include <logger/config.h>
 
 namespace common
 {
@@ -38,7 +38,7 @@ Configuration ReadFile(const boost::filesystem::path &filename)
 {
   if (!fs::exists(filename))
   {
-    THROW_COMMON_ERROR( ( boost::format( "is not exists file '%1%'" ) % filename.string() ).str() );
+    THROW_COMMON_ERROR((boost::format("is not exists file '%1%'") % filename.string()).str());
   }
 
   pt::ptree document;
@@ -69,7 +69,7 @@ Configuration ReadFile(const boost::filesystem::path &filename)
       }
       else
       {
-        THROW_COMMON_ERROR( ( boost::format( "invalid time type '%1%', configuration file '%2%'" ) % time_type % filename.string() ).str());
+        THROW_COMMON_ERROR((boost::format("invalid time type '%1%', configuration file '%2%'") % time_type % filename.string()).str());
       }
 
       if (const auto rotation = log_conf->get_child_optional("rotation"))
@@ -88,7 +88,7 @@ Configuration ReadFile(const boost::filesystem::path &filename)
         }
         else
         {
-          THROW_COMMON_ERROR( ( boost::format( "invalid rotation type '%1%', configuration file '%2%'" ) % type % filename.string() ).str() );
+          THROW_COMMON_ERROR((boost::format("invalid rotation type '%1%', configuration file '%2%'") % type % filename.string()).str());
         }
       }
 
@@ -108,7 +108,7 @@ Configuration ReadFile(const boost::filesystem::path &filename)
     }
     else
     {
-      THROW_COMMON_ERROR( ( boost::format("is not found section 'logger' into configuration file '%1%'" ) % filename.string() ).str() );
+      THROW_COMMON_ERROR((boost::format("is not found section 'logger' into configuration file '%1%'") % filename.string()).str());
     }
   }
   catch (const std::runtime_error &)
@@ -117,7 +117,7 @@ Configuration ReadFile(const boost::filesystem::path &filename)
   }
   catch (const std::exception &err)
   {
-    THROW_COMMON_ERROR( ( boost::format( "Is not read file '%1%' (%2%)" ) % filename.string() % err.what() ).str() );
+    THROW_COMMON_ERROR((boost::format("Is not read file '%1%' (%2%)") % filename.string() % err.what()).str());
   }
 }
 //---------------------------------------------------------------------------------------------------------

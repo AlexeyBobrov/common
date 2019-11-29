@@ -26,6 +26,7 @@ int main( int argc, char* argv[] )
 
   boost::log::core::get()->flush();
   boost::log::core::get()->remove_all_sinks();
+  
   return 0;
   
 }

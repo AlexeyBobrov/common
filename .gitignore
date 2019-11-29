@@ -28,5 +28,11 @@
 *.out
 *.app
 
+# binary and 3rdparty libs
 bin/
+lib/
 build/
+3rdparty/
+
+# indexed files
+tags
