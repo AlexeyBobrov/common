@@ -44,11 +44,17 @@ set (SOURCES
   src/logger/logger.cpp
   src/logger/utility.cpp
   src/error/error.cpp
+  src/thread/pool_thread.cpp
+  src/http/http_server.cpp
+  src/http/http_response.cpp
   )
 
 set (SOURCES_TEST
     ${SOURCES}
     test/test_logger.cpp
+    test/test_httpserver_demo.cpp
+    test/test_http_server.cpp
+    test/test_env.cpp
     )
 
   set (LIBRARIES
@@ -61,7 +67,7 @@ set (SOURCES_TEST
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++17 -Wall -v -g")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -c")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
 else()
   message(FATAL_ERROR "Unknown compiler, compiler id = ${CMAKE_CXX_COMPILER_ID}")
 endif()
