@@ -14,6 +14,8 @@
 
 // this
 #include <logger/logger.h>
+#include <http/http_server.h>
+#include <curl/libcurl.h>
 
 namespace common
 {
@@ -37,9 +39,18 @@ class TestEnvironment final : public ::testing::Environment
 {
 public:
   static Logger::logger_type& GetLogger();
+  static http::HttpServer& GetHttpServer();
+  static curl::LibCurl& GetCurl();
+  static constexpr std::string_view GetIp() { return ip_; }
+  static constexpr std::uint16_t GetPort() { return port_; }
   virtual void SetUp() override;
   virtual void TearDown() override;
 private:
+  static curl::LibCurl curl_;
+  static constexpr std::string_view ip_ { "127.0.0.1" };
+  static constexpr std::uint16_t port_ { 8080 };
+  static constexpr std::uint16_t threads_{ 4 };
+  static http::HttpServer httpServer_;
   LogConfigFile config_;
 };
 }

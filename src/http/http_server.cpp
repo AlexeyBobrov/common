@@ -106,13 +106,13 @@ public:
       while (!exit_)
       {
         // This will receive the new connection
-        auto socket = std::make_shared<boost::asio::ip::tcp::socket>(io);
-      
+        boost::asio::ip::tcp::socket socket{io};
+        
         // Block until we get a connection
-        acceptor_->accept(*socket);
+        acceptor_->accept(socket);
 
         // Launch the session, transferring ownership of the socket
-        boost::asio::post(pool_, std::bind(&Impl::DoSession, this, socket));
+        boost::asio::post(pool_, std::bind(&Impl::DoSession, this, std::ref(socket)));
 
         // Timeout thread
         std::this_thread::sleep_for(waitThr_);
@@ -127,7 +127,7 @@ public:
   }
 
   // The process session
-  void DoSession(std::shared_ptr<boost::asio::ip::tcp::socket> socket)
+  void DoSession(boost::asio::ip::tcp::socket& socket)
   {
     auto& logger = Logger::get();
 
@@ -140,13 +140,13 @@ public:
     boost::beast::flat_buffer buffer;
 
     // functional object for response
-    Send<boost::asio::ip::tcp::socket> sender{*socket, close, error};
+    Send<boost::asio::ip::tcp::socket> sender{socket, close, error};
 
-    for (;;)
+    while (!exit_)
     {
       // Read a request
       HttpRequest request;
-      boost::beast::http::read(*socket, buffer, request, error);
+      boost::beast::http::read(socket, buffer, request, error);
 
       if (error == boost::beast::http::error::end_of_stream)
       {
@@ -169,7 +169,7 @@ public:
     }
 
     boost::beast::error_code ec;
-    socket->shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
     LOG_DEBUG(logger) << "Complete processing session";
   }
 
@@ -219,26 +219,35 @@ public:
       sender(response);
     }
     
-
+    LOG_TRACE(logger) << "Complete dispatch request";
     return err;
   }
 
   void Stop()
   {
-    exit_ = true;
-    if (acceptor_)
-    {   
-      acceptor_->close();
-      acceptor_.reset();
-    }
-    if (thrAcceptor_)
+    if (!stopped_)
     {
-      thrAcceptor_->Join();
-      thrAcceptor_.reset();
-    }
+      exit_ = true;
+      if (acceptor_)
+      {
+        acceptor_->cancel();
+        acceptor_->close();
+        acceptor_.reset();
+      }
+      if (thrAcceptor_)
+      {
+        thrAcceptor_->Join();
+        thrAcceptor_.reset();
+      }
 
-    auto& logger = Logger::get();
-    LOG_INFO(logger) << "Stop http server";
+    
+      pool_.stop();
+      pool_.join();
+
+      auto& logger = Logger::get();
+      LOG_INFO(logger) << "Stop http server";
+      stopped_ = true;
+    }
   }
   
   ~Impl()
@@ -254,16 +263,37 @@ public:
 
     LOG_TRACE(logger) << "Adding handler for uri = '" << std::string(uri) << "', method = '" << method << "'";;
 
-    Context context{method, handler};
-    handlers_.emplace(std::string(uri), context);
+    auto handlers = handlers_.equal_range(std::string(uri));
+
+    Handlers::iterator contextIt = std::end(handlers_);
+    
+    for (auto it = handlers.first; it != handlers.second; ++it)
+    {
+      if (it->second.method == method)
+      {
+        contextIt = it;
+      }
+    }
+
+    if (std::end(handlers_) == contextIt)
+    {
+      Context context{method, handler};
+      handlers_.emplace(std::string(uri), context);
+    }
+    else
+    {
+      contextIt->second.handler = handler;
+    }
+
+    LOG_INFO(logger) << "count handlers: " << handlers_.size();
   }
-  
 private:
   std::string_view ip_;
   std::uint16_t port_;
   boost::asio::ip::tcp::endpoint protocol_;
   std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor_;
   std::atomic<bool> exit_ { false };
+  std::atomic<bool> stopped_ { false };
   Handlers handlers_;
   boost::asio::thread_pool pool_;
   std::unique_ptr<thread::ThreadSafe> thrAcceptor_;

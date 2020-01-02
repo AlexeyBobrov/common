@@ -62,7 +62,6 @@ FileDeleter fileDeleter = [](void*)
 LogConfigFile::LogConfigFile()
 : config_{fs::current_path() / "test_config.xml"}
 {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
   {
     std::ofstream fout{config_.c_str()};
     fout.write(LogConfig.data(), LogConfig.size());
@@ -74,7 +73,6 @@ LogConfigFile::LogConfigFile()
     THROW_COMMON_ERROR((boost::format("Config '%1%' is not found") % config_.string()).str());
   }
   
-  LOG_STDOUT_TRACE("Logger initialization");
   common::logger::Logger::InitFromFile(config_);
 }
 
@@ -85,6 +83,9 @@ LogConfigFile::~LogConfigFile()
   fs::remove_all(config_, err);
 }
 
+http::HttpServer TestEnvironment::httpServer_{ ip_, port_, threads_ };
+curl::LibCurl TestEnvironment::curl_;
+
 Logger::logger_type& TestEnvironment::GetLogger()
 {
   return Logger::get();
@@ -92,11 +93,22 @@ Logger::logger_type& TestEnvironment::GetLogger()
 
 void TestEnvironment::SetUp()
 {
-
+  httpServer_.Start();
 }
 
 void TestEnvironment::TearDown()
 {
+  httpServer_.Stop();
+}
+
+http::HttpServer& TestEnvironment::GetHttpServer()
+{
+  return httpServer_;
+}
+
+curl::LibCurl& TestEnvironment::GetCurl()
+{
+  return curl_;
 }
 
 }
