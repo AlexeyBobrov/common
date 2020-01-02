@@ -31,6 +31,8 @@ class Logger final
   /// @brief initialization logger from filename
   /// @param filename - filename configuration
   static void InitFromFile(const boost::filesystem::path &filename);
+  /// @brief deinit logger
+  static void DeInit();
 };
 }  // namespace logger
 }  // namespace common
@@ -63,5 +65,10 @@ BOOST_LOG_GLOBAL_LOGGER(Logger, common::logger::SeverityLogger)
 
 /// @brief trace message
 #define LOG_TRACE(lg) BOOST_LOG_SEV_ADD(lg, common::logger::Severity::trace)
+
+/// @brief stdout message
+#define LOG_STDOUT_TRACE(text)                                                  \
+    std::cout << "[" << __PRETTY_FUNCTION__ << "][" << __LINE__ << "]:  "       \
+    << text << std::endl
 
 #endif

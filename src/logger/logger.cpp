@@ -78,7 +78,8 @@ void AddAttribute(std::string_view name)
   auto it = log::core::get()->add_global_attribute(name.data(), Attribute());
   if (!it.second)
   {
-    THROW_COMMON_ERROR((boost::format("Is not added attribute '%1%'") % name).str());
+    // TODO: Удаление всех атрибутов при деинициализации
+    //THROW_COMMON_ERROR((boost::format("Is not added attribute '%1%'") % name).str());
   }
 }
 
@@ -281,6 +282,17 @@ void Logger::InitFromFile(const boost::filesystem::path &filename)
 {
   const auto conf = config::ReadFile(filename);
   InitLog(conf);
+}
+//--------------------------------------------------------------------------------------------
+void Logger::DeInit()
+{
+  auto core = log::core::get();
+  
+  // Flush all logs that may have left buffered
+  core->flush();
+
+  // Remove all sinks
+  core->remove_all_sinks();
 }
 //--------------------------------------------------------------------------------------------
 }  // namespace logger

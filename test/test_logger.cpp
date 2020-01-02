@@ -81,7 +81,7 @@ class LogTest : public ::testing::Test
   fs::path confPath_;
 };
 
-TEST_F(LogTest, InitLogger)
+TEST_F(LogTest, DISABLED_InitLogger)
 {
   const auto& pathConfig = GetFileConfig();
 
@@ -96,7 +96,6 @@ TEST_F(LogTest, InitLogger)
   LOG_FATAL(log) << "Fatal";
   LOG_DEBUG(log) << "Debug";
   LOG_TRACE(log) << "Trace";
- // boost::log::core::get()->flush();
- // boost::log::core::get()->remove_all_sinks();
+  logger::Logger::DeInit();
 }
 
