@@ -71,11 +71,14 @@ class LibCurl final
   void SetTimeOut(std::uint32_t t);
   /** @brief set connection timeout (seconds) */
   void SetConnTimeOut(std::uint32_t t);
+  /** @brief set encoding
+   *  @param encoding - encoding (utf, cp12510
+   */
+  void SetEncoding(const std::string& encoding);
   /** @brief set headers
-   * @param encoding - encoding (UTF, CP1251)
    * @param headers - other headers
    */
-  void SetHeaders(const std::string &encoding, const Headers &h);
+  void SetHeaders(const Headers &h);
   /** @brief set login and password
    * @param login - login
    * @param password - password

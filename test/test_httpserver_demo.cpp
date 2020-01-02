@@ -316,7 +316,7 @@ void do_session(tcp::socket& socket,
   // At this point the connection is closed gracefully
 }
 
-TEST(DemoHttpServer, BoostHttpServer)
+TEST(DemoHttpServer, DISABLED_BoostHttpServer)
 {
   auto& log = Logger::get();
   constexpr std::string_view ip = "127.0.0.1";
@@ -327,7 +327,7 @@ TEST(DemoHttpServer, BoostHttpServer)
     << port << "', doc_root = '" << *doc_root << "'";
 
 
-  const auto address = net::ip::make_address(ip.data());
+  //const auto address = net::ip::make_address(ip.data());
 
   // The io_context is required for all I/O
   net::io_context ioc{1};

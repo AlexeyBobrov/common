@@ -2,9 +2,11 @@
   * @brief The implementation libcurl wrapper
   * @author Bobrov A.E.
   * @date 16.07.2016
+  * @copyright (c) Bobrov A.E.
   */
 // this
-#include "curl/libcurl.h"
+#include <curl/libcurl.h>
+#include <curl/curl_error.h>
 
 // std
 #include <memory>
@@ -25,6 +27,9 @@ namespace common
 {
 namespace curl
 {
+
+using CurlErrorBuffer = std::array<char, CURL_ERROR_SIZE>;
+
 // RAII for curl
 using TCurlCleaner = std::function<void(CURL *)>;
 using CurlPtr = std::unique_ptr<CURL, TCurlCleaner>;
@@ -89,54 +94,56 @@ public:
 
     if (!initializator)
     {
-      throw std::runtime_error("[LibCurl::init]: failed global initialization.");
+      THROW_CURL_ERROR("failed global initialization");
     }
 
     CURL *p = curl_easy_init();
     if (!p)
     {
-      throw std::runtime_error("[LibCurl::init]: failed 'curl_easy_init()'.");
+      THROW_CURL_ERROR("failed initizliation");
     }
 
     curl_.reset(p);
   }
-
-  //----------------------------------------------------------------------------------------
-  void verbose(bool enable)
+  
+  void Verbose(bool enable)
   {
     Locker locker(lock_);
 
-    curlSetOpt(CURLOPT_VERBOSE, static_cast<long>(enable), "LibCurl::verbose", "CURLOPT_VERBOSE");
+    CurlSetOpt(CURLOPT_VERBOSE, static_cast<long>(enable));
   }
-  //----------------------------------------------------------------------------------------
-  void setTimeOut(std::uint32_t t)
+  
+  void SetTimeOut(std::uint32_t t)
   {
     Locker locker(lock_);
 
-    curlSetOpt(CURLOPT_TIMEOUT, static_cast<long>(t), "LibCurl::setTimeOut", "CURLOPT_TIMEOUT");
+    CurlSetOpt(CURLOPT_TIMEOUT, static_cast<long>(t));
   }
-  //----------------------------------------------------------------------------------------
-  void setConnTimeOut(std::uint32_t t)
+  
+  void SetConnTimeOut(std::uint32_t t)
   {
     Locker locker(lock_);
 
-    curlSetOpt(CURLOPT_CONNECTTIMEOUT, static_cast<long>(t), "LibCurl::setConnTimeOut", "CURLOPT_CONNECTTIMEOUT");
+    CurlSetOpt(CURLOPT_CONNECTTIMEOUT, static_cast<long>(t));
   }
-  //----------------------------------------------------------------------------------------
-  void setUserPassw(const std::string &login, const std::string &passw)
+  
+  void SetUserPassw(const std::string &login, const std::string &passw)
   {
     Locker locker(lock_);
-
-    curlSetOpt(CURLOPT_USERNAME, login.data(), "LibCurl::setUserPassw", "CURLOPT_USERNAME");
-    curlSetOpt(CURLOPT_PASSWORD, passw.data(), "LibCurl::setUasePassw", "CURLOPT_PASSWORD");
+  
+    CurlSetOpt(CURLOPT_USERNAME, login.data());
+    CurlSetOpt(CURLOPT_PASSWORD, passw.data());
   }
-  //----------------------------------------------------------------------------------------
-  void setHeaders(const std::string &encoding, const Headers &h)
+  
+  void SetEncoding(const std::string& encoding)
   {
     Locker locker(lock_);
 
-    curlSetOpt(CURLOPT_ENCODING, encoding.c_str(), "LibCurl::setHeaders", "CURLOPT_ENCODING");
-
+    CurlSetOpt(CURLOPT_ENCODING, encoding.c_str());
+  }
+  
+  void SetHeaders(const Headers &h)
+  {
     curl_slist *headers = nullptr;
     for (const auto &i : h)
     {
@@ -145,86 +152,80 @@ public:
 
     curl_list_.reset(headers);
     
-    curlSetOpt(CURLOPT_HTTPHEADER, curl_list_.get(), "LibCurl::setHeaders", "CURLOPT_HTTPHEADER");
+    CurlSetOpt(CURLOPT_HTTPHEADER, curl_list_.get());
   }
-  //----------------------------------------------------------------------------------------
-  std::tuple<std::string, long> get(const std::string &url)
+
+  Response Request(const std::string& url, const std::string& data)
   {
-    Locker locker(lock_);
+    CurlSetOpt(CURLOPT_POSTFIELDSIZE, data.size());
+    CurlSetOpt(CURLOPT_POSTFIELDS, data.c_str());
 
-    curlSetOpt(CURLOPT_URL, url.data(), "LibCurl::get", "CURLOPT_URL");
-    std::array<char, CURL_ERROR_SIZE> errBuffer;
-    curlSetOpt(CURLOPT_ERRORBUFFER, errBuffer.data(), "LibCurl::get", "CURLOPT_ERRORBUFFER");
+    CurlSetOpt(CURLOPT_URL, url.c_str());
+   
+    CurlErrorBuffer errorBuffer;
+    CurlSetOpt(CURLOPT_ERRORBUFFER, errorBuffer.data());
+
+    CurlSetOpt(CURLOPT_WRITEFUNCTION, writer);
     
-    curlSetOpt(CURLOPT_WRITEFUNCTION, writer, "LibCurl::get", "CURLOPT_WRITEFUNCTION");
-
     std::string buffer;
-    curlSetOpt(CURLOPT_WRITEDATA, &buffer, "LibCurl::get", "CURLOPT_WRITEDATA");
+    CurlSetOpt(CURLOPT_WRITEDATA, &buffer );
 
-    if (curl_list_)
-    {
-      curlSetOpt(CURLOPT_HEADER, 1, "LibCurl::get", "CURLOPT_HEADER");
-    }
-    
     auto responseCode = static_cast<long>(0);
     auto result = curl_easy_perform(curl_.get());
+    
     auto retGetInfo = curl_easy_getinfo(curl_.get(), CURLINFO_RESPONSE_CODE, &responseCode);
     if (CURLE_OK != retGetInfo)
     {
-      throwCurlError(retGetInfo, "LibCurl::get", "CURLINFO_RESPONSE_CODE");
+      THROW_CURL_ERROR(retGetInfo);
     }
-
+  
     curl_easy_reset(curl_.get());
     curl_list_.reset();
-    
+
     if (CURLE_OK != result)
     {
-      throwCurlError(result, "LibCurl::get", std::string());
+      THROW_CURL_ERROR(result);
     }
 
     return std::make_tuple(std::move(buffer), responseCode);
   }
-  //----------------------------------------------------------------------------------------
-  std::tuple<std::string, long> post(const std::string &url)
+
+  Response Get(const std::string& url, const std::string& data)
   {
-    Locker locker(lock_);
+    Locker locker{lock_};
 
-    curlSetOpt(CURLOPT_URL, url.data(), "LibCurl::post", "CURLOPT_URL");
-    std::array<char, CURL_ERROR_SIZE> errBuffer;
-    curlSetOpt(CURLOPT_ERRORBUFFER, errBuffer.data(), "LibCurl::post", "CURLOPT_ERRORBUFFER");
-    curlSetOpt(CURLOPT_POST, 1L, "LibCurl::get", "CURLOPT_POST");
-    
-    curlSetOpt(CURLOPT_READFUNCTION, writer, "LibCurl::post", "CURLOPT_READFUNCTION");
-
-    std::string buffer;
-    curlSetOpt(CURLOPT_READDATA, &buffer, "LibCurl::post", "CURLOPT_READDATA");
-
-    if (curl_list_)
-    {
-      curlSetOpt(CURLOPT_HEADER, 1, "LibCurl::post", "CURLOPT_HEADER");
-    }
-    
-    auto responseCode = static_cast<long>(0);
-    auto result = curl_easy_perform(curl_.get());
-    auto retGetInfo = curl_easy_getinfo(curl_.get(), CURLINFO_RESPONSE_CODE, &responseCode);
-    if (CURLE_OK != retGetInfo)
-    {
-      throwCurlError(retGetInfo, "LibCurl::post", "CURLINFO_RESPONSE_CODE");
-    }
-
-    curl_easy_reset(curl_.get());
-    curl_list_.reset();
-    
-    if (CURLE_OK != result)
-    {
-      throwCurlError(result, "LibCurl::post", std::string());
-    }
-
-    return std::make_tuple(std::move(buffer), responseCode);
-
+    CurlSetOpt(CURLOPT_CUSTOMREQUEST, "GET");
+    return Request(url, data);
   }
-  //----------------------------------------------------------------------------------------
-  std::string escapeUrl(const std::string &url)
+
+  Response Post(const std::string& url, const std::string& data)
+  {
+    Locker locker{lock_};
+
+    CurlSetOpt(CURLOPT_CUSTOMREQUEST, "POST");
+
+    return Request(url, data);
+  }
+
+  Response Put(const std::string& url, const std::string& data)
+  {
+    Locker locker{lock_};
+
+    CurlSetOpt(CURLOPT_CUSTOMREQUEST, "PUT");
+
+    return Request(url, data);
+  }
+
+  Response Delete(const std::string& url, const std::string& data)
+  {
+    Locker locker{lock_};
+
+    CurlSetOpt(CURLOPT_CUSTOMREQUEST, "DELETE");
+
+    return Request(url, data);
+  }
+  
+  std::string EscapeUrl(const std::string &url)
   {
     Locker locker(lock_);
 
@@ -233,7 +234,7 @@ public:
     curl_free(ptr);
     return result;
   }
-  //---------------------------------------------------------------------------------------
+  
   /** @brief disable copy semantics */
   Impl(const Impl &) = delete;
   Impl &operator=(const Impl &) = delete;
@@ -243,32 +244,6 @@ public:
   ~Impl() = default;
   
 private:
-  /** @brief throw curl error
-    * @param code - return code libcurl function
-    * @param source - source error
-    * @param optname - name option
-    */
-  void throwCurlError(CURLcode code, const std::string &source, const std::string &optname)
-  {
-    auto str = curl_easy_strerror(code);
-    std::ostringstream err;
-
-    err << "[" << source << "]: ";
-    if (!optname.empty())
-    {
-      err << "option name '" << optname + "', ";
-    }
-    
-    err << str;
-    
-    throw std::runtime_error(err.str());
-  }
-
-  void throwCurlError(CURLcode code, std::string &&source, std::string &&optname)
-  {
-    throwCurlError(code, source, optname);
-  }
-
   template <typename T>
   void curlSetOpt(std::uint32_t opt, T t, std::string &&source, std::string &&optname)
   {
@@ -276,6 +251,16 @@ private:
     if (CURLE_OK != ret)
     {
       throwCurlError(ret, source, optname);
+    }
+  }
+
+  template <typename T>
+  void CurlSetOpt(std::uint32_t opt, const T& t)
+  {
+    auto ret = curl_easy_setopt(curl_.get(), static_cast<CURLoption>(opt), t);
+    if (CURLE_OK != ret)
+    {
+      THROW_CURL_SETOPT_ERROR(opt, t, ret);
     }
   }
 
@@ -301,52 +286,66 @@ private:
   std::mutex lock_;
 };
 
-////////////////////////////////////////////////////////////////////////////////
 LibCurl::LibCurl()
   : impl_(new Impl())
 {
 
 }
-//------------------------------------------------------------------------------
-std::tuple<std::string, long> LibCurl::Get(const std::string &url, const std::string&)
+
+LibCurl::Response LibCurl::Get(const std::string &url, const std::string& data)
 {
-  return impl_->get(url);
+  return impl_->Get(url, data);
 }
-//------------------------------------------------------------------------------
-std::tuple<std::string, long> LibCurl::Post(const std::string &url, const std::string&)
+
+LibCurl::Response LibCurl::Post(const std::string &url, const std::string& data)
 {
-  return impl_->post(url);
+  return impl_->Post(url, data);
 }
-//------------------------------------------------------------------------------
+
+LibCurl::Response LibCurl::Put(const std::string& url, const std::string& data)
+{
+  return impl_->Put(url, data);
+}
+
+LibCurl::Response LibCurl::Delete(const std::string& url, const std::string& data)
+{
+  return impl_->Delete(url, data);
+}
+
 void LibCurl::SetVerbose(bool enable)
 {
-  impl_->verbose(enable);
+  impl_->Verbose(enable);
 }
-//------------------------------------------------------------------------------
+
 void LibCurl::SetTimeOut(std::uint32_t t)
 {
-  impl_->setTimeOut(t);
+  impl_->SetTimeOut(t);
 }
-//------------------------------------------------------------------------------
+
 void LibCurl::SetConnTimeOut(std::uint32_t t)
 {
-  impl_->setConnTimeOut(t);
+  impl_->SetConnTimeOut(t);
 }
-//------------------------------------------------------------------------------
-void LibCurl::SetHeaders(const std::string &encoding, const Headers &h)
+
+void LibCurl::SetEncoding(const std::string& encoding)
 {
-  impl_->setHeaders(encoding, h);
+  impl_->SetEncoding(encoding);
 }
-//------------------------------------------------------------------------------
+
+void LibCurl::SetHeaders(const Headers &h)
+{
+  impl_->SetHeaders(h);
+}
+
 void LibCurl::SetUserPassw(const std::string &login, const std::string &passw)
 {
-  impl_->setUserPassw(login, passw);
+  impl_->SetUserPassw(login, passw);
 }
-//------------------------------------------------------------------------------
+
 std::string LibCurl::EscapeUrl(const std::string &url)
 {
-  return impl_->escapeUrl(url);
+  return impl_->EscapeUrl(url);
 }
-//------------------------------------------------------------------------------
+
 }
 }

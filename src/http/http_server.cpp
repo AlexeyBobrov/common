@@ -193,11 +193,6 @@ public:
     {
       for (auto it = handlersUri.first; it != handlersUri.second; ++it)
       {
-        LOG_TRACE(logger) << "uri: " << it->first;
-
-        // check method
-        LOG_TRACE(logger) << "method: " << it->second.method;
-
         if (it->second.method == verb)
         {
           handler = it->second.handler;

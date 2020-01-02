@@ -33,6 +33,7 @@ bin/
 lib/
 build/
 3rdparty/
+log/
 
 # indexed files
 tags

@@ -27,7 +27,7 @@ namespace test
     R"(<?xml version="1.0" encoding="UTF-8"?>
   <document>
     <logger>
-      <stdout>true</stdout>
+      <stdout>false</stdout>
       <time>utc</time>
       <level>trace</level>
       <workdir>log</workdir>
