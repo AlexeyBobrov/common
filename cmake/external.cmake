@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.10)
+
+option(GTEST_SYSTEM OFF)
+option(BOOST_SYSTEM OFF)
+
+# add external components
+set(COMPONENTS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/libs/components")
+set(COMPONENTS_ARCHIVE "${COMPONENTS_PREFIX}/libs")
+set(COMPONENTS_MODULES "${COMPONENTS_PREFIX}/modules")
+
+list(APPEND CMAKE_MODULE_PATH ${COMPONENTS_MODULES})
+
+set(Boost_NO_SYSTEM_PATHS ON)
+set(BOOST_INSTALL_DIR ${PROJECT_BINARY_DIR}/stage)
+include(${COMPONENTS_PREFIX}/components.cmake)

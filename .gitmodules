@@ -1,0 +1,3 @@
+[submodule "libs/components"]
+	path = libs/components
+	url = git@github.com:AlexeyBobrov/components.git
