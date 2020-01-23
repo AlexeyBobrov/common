@@ -1,1 +1,1 @@
-set (ProjectName common-sdk)
+set (ProjectName common)

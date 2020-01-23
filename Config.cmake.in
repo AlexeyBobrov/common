@@ -1,4 +1,4 @@
 
 @PACKAGE_INIT@
 
-include ("${CMAKE_CURRENT_LIST_DIR}/${ProjectName}Targets.cmake")
+include ("${CMAKE_CURRENT_LIST_DIR}/commonTargets.cmake")
