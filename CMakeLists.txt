@@ -62,7 +62,14 @@ set (SOURCES_TEST
 set (LIBRARIES
     pthread
     ${CURL_LIBRARIES}
-    ${Boost_LIBRARIES}
+    Boost::log_setup
+    Boost::log
+    Boost::system
+    Boost::thread
+    Boost::date_time
+    Boost::filesystem
+    Boost::program_options
+    Boost::unit_test_framework
     )
 
 set (LIBRARIES_TEST
@@ -88,7 +95,7 @@ target_include_directories(${ProjectName}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
   $<BUILD_INTERFACE:${Boost_INCLUDE_DIRS}>
   $<BUILD_INTERFACE:${CURL_INCLUDE_DIRS}>
-  $<INSTALL_INTERFACE:include>
+  $<INSTALL_INTERFACE:include/${ProjectName}>
   )
 
 set_target_properties(${ProjectName} PROPERTIES 
@@ -112,12 +119,12 @@ install(DIRECTORY inc/common
   inc/http
   inc/logger
   inc/thread
-  DESTINATION include
+  DESTINATION include/${ProjectName}
   )
 
 # install
 install(FILES "${PROJECT_BINARY_DIR}/common_version.h"
-  DESTINATION include
+  DESTINATION include/${ProjectName}
   )
 
 include(InstallRequiredSystemLibraries)
@@ -137,8 +144,6 @@ include(CMakePackageConfigHelpers)
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
   "${CMAKE_CURRENT_BINARY_DIR}/${ProjectName}Config.cmake"
   INSTALL_DESTINATION "lib/cmake/${ProjectName}"
-  NO_SET_AND_CHECK_MACRO
-  NO_CHECK_REQUIRED_COMPONENTS_MACRO
   )
 
 # generate the version file for the config file

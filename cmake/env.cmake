@@ -1,1 +1,1 @@
-set (ProjectName common)
+set (ProjectName ctlite)
