@@ -3,6 +3,7 @@
  *  @author Bobrov A.E.
  *  @date 12.09.2016
  */
+
 // declare
 #include <logger/logger.h>
 

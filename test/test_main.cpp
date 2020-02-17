@@ -22,10 +22,6 @@
 #include <logger/logger.h>
 #include <test_env.h>
 
-namespace fs = boost::filesystem;
-namespace pt = boost::property_tree;
-namespace log = common::logger;
-
 
 int main(int argc, char *argv[])
 {
