@@ -160,11 +160,11 @@ public:
       }
 
       // dispatch message
-      auto err = Dispatch<Send<boost::asio::ip::tcp::socket>>(request, std::ref(sender));
+      Dispatch<Send<boost::asio::ip::tcp::socket>>(request, std::ref(sender));
 
-      if (err)
+      if (error)
       {
-        LOG_ERROR(logger) << "Error dispatch message";
+        LOG_ERROR(logger) << "Error sending response";
       }
     }
 
@@ -174,12 +174,10 @@ public:
   }
 
   template <typename Sender>
-  boost::beast::error_code Dispatch(HttpRequest request, Sender& sender)
+  void Dispatch(HttpRequest request, Sender& sender)
   {
     std::shared_lock<Mutex> lock(m_);
 
-    boost::beast::error_code err;
-    
     const auto& uri = request.target();
     const auto& verb = request.method();
 
@@ -215,7 +213,6 @@ public:
     }
     
     LOG_TRACE(logger) << "Complete dispatch request";
-    return err;
   }
 
   void Stop()

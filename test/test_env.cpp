@@ -52,13 +52,6 @@ namespace fs = boost::filesystem;
 
 const fs::path config = fs::current_path() /  "test_logger.xml";
 
-using FileDeleter = std::function<void(void *p)>;
-FileDeleter fileDeleter = [](void*)
-{
-  boost::system::error_code ec;
-  fs::remove_all(config, ec);
-};
-
 LogConfigFile::LogConfigFile()
 : config_{fs::current_path() / "test_config.xml"}
 {
@@ -66,11 +59,6 @@ LogConfigFile::LogConfigFile()
     std::ofstream fout{config_.c_str()};
     fout.write(LogConfig.data(), LogConfig.size());
     fout.close();
-  }
-  
-  if (!fs::exists(config_))
-  {
-    THROW_COMMON_ERROR((boost::format("Config '%1%' is not found") % config_.string()).str());
   }
   
   common::logger::Logger::InitFromFile(config_);

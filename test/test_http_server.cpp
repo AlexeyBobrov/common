@@ -165,19 +165,9 @@ protected:
     return TestEnvironment::GetHttpServer();
   }
   
-  Logger::logger_type& GetLogger()
-  {
-    return logger_;
-  }
-
   curl::LibCurl& GetCurl()
   {
     return TestEnvironment::GetCurl();
-  }
-
-  const std::string& GetUrl() const
-  {
-    return url_;
   }
 
   const Tests& GetTests() const

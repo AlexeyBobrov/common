@@ -74,14 +74,13 @@ class LogTest : public ::testing::Test
   virtual void TearDown() override {}
 
  protected:
-  pt::ptree& GetConfig() { return config_; }
   const fs::path& GetFileConfig() const { return confPath_; }
  private:
   pt::ptree config_;
   fs::path confPath_;
 };
 
-TEST_F(LogTest, DISABLED_InitLogger)
+TEST_F(LogTest, InitLogger)
 {
   const auto& pathConfig = GetFileConfig();
 

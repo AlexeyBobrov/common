@@ -51,9 +51,11 @@ set (SOURCES
 set (SOURCES_TEST
     ${SOURCES}
     test/test_logger.cpp
-    test/test_httpserver_demo.cpp
     test/test_http_server.cpp
     test/test_env.cpp
+    test/test_curl.cpp
+    test/test_thread.cpp
+    test/test_common.cpp
     )
 
 set (LIBRARIES
@@ -188,5 +190,6 @@ add_custom_target(test
 
 add_custom_target(gcov
   COMMAND llvm-profdata-mp-9.0 merge -sparse default.profraw -o ${ProjectName}_test.profdata
+  COMMAND llvm-cov-mp-9.0 show ${ProjectName}_test -instr-profile=${ProjectName}_test.profdata
   COMMAND llvm-cov-mp-9.0 report ${ProjectName}_test -instr-profile=${ProjectName}_test.profdata
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})

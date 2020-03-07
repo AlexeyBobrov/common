@@ -73,7 +73,6 @@ public:
     }
   }
 
-  bool isInitialization() const { return init_; }
   operator bool() const { return init_; }
 private:
   bool init_{ false };

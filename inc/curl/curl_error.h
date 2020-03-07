@@ -25,6 +25,7 @@ namespace curl
 {
 class CurlError : public error::Error
 {
+ public:
   static constexpr std::string_view FormatSetOptError {"Error settings value %1% to %2% parameter: %3%"};
   static constexpr std::string_view FormatError {"Curl error: %1%"};
  public:
