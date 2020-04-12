@@ -19,7 +19,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # curl library
-find_package(curl REQUIRED)
+find_package(CURL CONFIG REQUIRED)
 
 # boost configuration
 find_package(Boost 1.68 COMPONENTS log_setup log system thread date_time filesystem program_options unit_test_framework REQUIRED)
@@ -60,7 +60,6 @@ set (SOURCES_TEST
 
 set (LIBRARIES
     pthread
-    ${CURL_LIBRARIES}
     Boost::log_setup
     Boost::log
     Boost::system
@@ -69,6 +68,7 @@ set (LIBRARIES
     Boost::filesystem
     Boost::program_options
     Boost::unit_test_framework
+    CURL::libcurl
     )
 
 set (LIBRARIES_TEST
