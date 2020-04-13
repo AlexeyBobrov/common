@@ -3,7 +3,7 @@ include(vcpkg_common_functions)
 vcpkg_from_git(
   OUT_SOURCE_PATH SOURCE_PATH
   URL https://github.com/AlexeyBobrov/common
-  REF 363f2c04baca416e744e5a347df988bb29ef2ff1 
+  REF ddd897bf0530fd529bbc6fbc5bf1ed5c59dacce9
   )
 
 
