@@ -11,6 +11,8 @@
 #include <gtest/gtest.h>
 
 #include <logger/logger.h>
+#include <logger/utility.h>
+#include <logger/types.h>
 
 #include <thread>
 #include <sstream>
@@ -98,3 +100,32 @@ TEST_F(LogTest, InitLogger)
   logger::Logger::DeInit();
 }
 
+TEST_F(LogTest, SeverityToText)
+{
+  namespace utils = logger::utility;
+  
+  ASSERT_EQ(utils::Critical, utils::SeverityToText(logger::Severity::critical));
+  ASSERT_EQ(utils::Fatal, utils::SeverityToText(logger::Severity::fatal));
+  ASSERT_EQ(utils::Error, utils::SeverityToText(logger::Severity::error));
+  ASSERT_EQ(utils::Info, utils::SeverityToText(logger::Severity::info));
+  ASSERT_EQ(utils::Warning, utils::SeverityToText(logger::Severity::warning));
+  ASSERT_EQ(utils::Debug, utils::SeverityToText(logger::Severity::debug));
+  ASSERT_EQ(utils::Trace, utils::SeverityToText(logger::Severity::trace));
+
+  ASSERT_THROW(utils::SeverityToText(static_cast<logger::Severity>(100)), std::exception);
+}
+
+TEST_F(LogTest, SeverityFromText)
+{
+  namespace utils = logger::utility;
+
+  ASSERT_EQ(logger::Severity::fatal, utils::SeverityFromText(utils::Fatal));
+  ASSERT_EQ(logger::Severity::critical, utils::SeverityFromText(utils::Critical));
+  ASSERT_EQ(logger::Severity::error, utils::SeverityFromText(utils::Error));
+  ASSERT_EQ(logger::Severity::info, utils::SeverityFromText(utils::Info));
+  ASSERT_EQ(logger::Severity::warning, utils::SeverityFromText(utils::Warning));
+  ASSERT_EQ(logger::Severity::debug, utils::SeverityFromText(utils::Debug));
+  ASSERT_EQ(logger::Severity::trace, utils::SeverityFromText(utils::Trace));
+
+  ASSERT_THROW(utils::SeverityFromText("unk"), std::exception);
+}

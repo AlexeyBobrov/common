@@ -17,34 +17,24 @@ namespace logger
 {
 namespace utility
 {
-using namespace std::literals::string_view_literals;
-
-constexpr auto FatalText = "FATAL"sv;
-constexpr auto CriticalText = "CRITICAL"sv;
-constexpr auto ErrorText = "ERROR"sv;
-constexpr auto InfoText = "INFO"sv;
-constexpr auto WarningText = "WARNING"sv;
-constexpr auto DebugText = "DEBUG"sv;
-constexpr auto TraceText = "TRACE"sv;
-
 std::string_view SeverityToText(Severity severity)
 {
   switch (severity)
   {
     case Severity::fatal:
-      return FatalText;
+      return Fatal;
     case Severity::critical:
-      return CriticalText;
+      return Critical;
     case Severity::error:
-      return ErrorText;
+      return Error;
     case Severity::info:
-      return InfoText;
+      return Info;
     case Severity::warning:
-      return WarningText;
+      return Warning;
     case Severity::debug:
-      return DebugText;
+      return Debug;
     case Severity::trace:
-      return TraceText;
+      return Trace;
   }
 
   THROW_COMMON_ERROR((boost::format("Unknown severity '%1%'") % static_cast<int>(severity)).str());
@@ -52,31 +42,31 @@ std::string_view SeverityToText(Severity severity)
 
 Severity SeverityFromText(std::string_view name)
 {
-  if (name == CriticalText)
+  if (name == Critical)
   {
     return Severity::critical;
   }
-  else if (name == FatalText)
+  else if (name == Fatal)
   {
     return Severity::fatal;
   }
-  else if (name == ErrorText)
+  else if (name == Error)
   {
     return Severity::error;
   }
-  else if (name == InfoText)
+  else if (name == Info)
   {
     return Severity::info;
   }
-  else if (name == WarningText)
+  else if (name == Warning)
   {
     return Severity::warning;
   }
-  else if (name == DebugText)
+  else if (name == Debug)
   {
     return Severity::debug;
   }
-  else if (name == TraceText)
+  else if (name == Trace)
   {
     return Severity::trace;
   }

@@ -56,6 +56,8 @@ set (SOURCES_TEST
     test/test_curl.cpp
     test/test_thread.cpp
     test/test_common.cpp
+    test/test_utility.cpp
+    test/test_http_response.cpp
     )
 
 set (LIBRARIES

@@ -18,6 +18,15 @@ namespace logger
 {
 namespace utility
 {
+
+constexpr std::string_view Fatal = "FATAL";
+constexpr std::string_view Critical = "CRITICAL";
+constexpr std::string_view Error = "ERROR";
+constexpr std::string_view Info = "INFO";
+constexpr std::string_view Warning = "WARNING";
+constexpr std::string_view Debug = "DEBUG";
+constexpr std::string_view Trace = "TRACE";
+
 /** @brief Get text name severity from enum
  *  @param severity
  *  @return text name
