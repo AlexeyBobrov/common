@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+	<logger>
+		<stdout>true</stdout>
+		<!-- время отображаемое в логе (utc, или локальное) -->
+		<time>utc</time>
+                <workdir>bin/</workdir>
+                    <!--		<filename>geocoder_%Y-%m-%d_%H-%M-%S.%N.log</filename> -->
+                <filename>logger.%N.log</filename>
+		<rotation>
+			<!-- type=time,size-->
+			<type>size</type>
+			<!-- seconds -->
+			<period>3600</period>
+			<!-- размер файла, для size в МБ -->
+			<size>10000</size>
+		</rotation>
+		<attributes>
+			<threadid>true</threadid>
+                        <processid>true</processid>
+                        <filename>true</filename>
+                        <function>true</function>
+                        <line>true</line>
+		</attributes>
+	</logger>
+</document>
