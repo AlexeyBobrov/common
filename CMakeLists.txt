@@ -167,14 +167,15 @@ export(EXPORT ${ProjectName}Targets
 add_executable(${ProjectName}_test ${INCLUDES} ${SOURCES_TEST} test/test_main.cpp)
 target_compile_options(${ProjectName}_test
   PUBLIC 
-  $<$<CXX_COMPILER_ID:Clang>:
-  -g -O0 -Wall -v -fcoverage-mapping -fprofile-instr-generate>
+  $<$<CXX_COMPILER_ID:Clang>: -g -O0 -Wall -fcoverage-mapping -fprofile-instr-generate>
+  $<$<CXX_COMPILER_ID:GNU>: -g -O0 -Wall -fprofile-arcs -ftest-coverage>
   )
+
 target_link_options(${ProjectName}_test
   PUBLIC 
   $<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>
+  $<$<CXX_COMPILER_ID:GNU>:--coverage>
   )
-  
 
 target_include_directories(${ProjectName}_test
   PRIVATE
@@ -190,8 +191,29 @@ add_custom_target(test
   COMMAND ${ProjectName}_test
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 
-add_custom_target(gcov
-  COMMAND llvm-profdata-mp-9.0 merge -sparse default.profraw -o ${ProjectName}_test.profdata
-  COMMAND llvm-cov-mp-9.0 show ${ProjectName}_test -instr-profile=${ProjectName}_test.profdata
-  COMMAND llvm-cov-mp-9.0 report ${ProjectName}_test -instr-profile=${ProjectName}_test.profdata
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+  if (NOT LLVM_PROFDATA OR NOT LLVM_COV)
+    message(WARNING "Not found llvm coverage tools")
+  else()
+    
+    add_custom_target(gcov
+      COMMAND ${LLVM_PROFDATA} merge -sparse default.profraw -o ${ProjectName}_test.profdata
+      COMMAND ${LLVM_COV} show ${ProjectName}_test -instr-profile=${ProjectName}_test.profdata
+      COMMAND ${LLVM_COV} report ${ProjectName}_test -instr-profile=${ProjectName}_test.profdata
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
+  endif()
+elseif ( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" )
+  find_program(GCOVR NAME gcovr PATHS /usr/bin/ /opt/local/bin)
+  if (NOT GCOVR)
+    message(FATAL_ERROR "Not found gcovr")
+  endif()
+
+  message(DEBUG "Gcovr program ${GCOVR}")
+
+  add_custom_target(gcov
+    COMMAND ${GCOVR} --gcov-executable=${GCOV} -r ${CMAKE_CURRENT_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+
+endif()

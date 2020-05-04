@@ -1,1 +1,1 @@
-set (ProjectName ctlite)
+set(ProjectName cmntype)
