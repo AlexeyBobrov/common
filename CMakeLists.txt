@@ -165,7 +165,7 @@ export(EXPORT ${ProjectName}Targets
 add_executable(${ProjectName}_test ${INCLUDES} ${SOURCES_TEST} test/test_main.cpp)
 target_compile_options(${ProjectName}_test
   PUBLIC 
-  $<$<CXX_COMPILER_ID:Clang>: -g -O0 -Wall -v -fcoverage-mapping -fprofile-instr-generate>
+  $<$<CXX_COMPILER_ID:Clang>: -g -O0 -Wall -fcoverage-mapping -fprofile-instr-generate>
   $<$<CXX_COMPILER_ID:GNU>: -g -O0 -Wall -fprofile-arcs -ftest-coverage>
   )
 
