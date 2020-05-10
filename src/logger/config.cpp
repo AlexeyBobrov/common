@@ -15,8 +15,8 @@
 #include <stdexcept>
 
 // this
-#include <error/error.h>
-#include <logger/config.h>
+#include <cmntype/error/error.h>
+#include <cmntype/logger/config.h>
 
 namespace common
 {

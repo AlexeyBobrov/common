@@ -17,7 +17,7 @@
 #include <curl/curl.h>
 
 // error
-#include <error/error.h>
+#include <cmntype/error/error.h>
 
 namespace common
 {

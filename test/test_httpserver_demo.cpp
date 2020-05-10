@@ -21,7 +21,7 @@
 // gtest
 #include <gtest/gtest.h>
 
-#include <logger/logger.h>
+#include <cmntype/logger/logger.h>
 
 namespace beast = boost::beast;
 namespace http = beast::http;

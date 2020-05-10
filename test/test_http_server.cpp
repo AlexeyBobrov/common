@@ -15,8 +15,8 @@
 #include <gtest/gtest.h>
 
 // common
-#include <http/http_server.h>
-#include <logger/logger.h>
+#include <cmntype/http/http_server.h>
+#include <cmntype/logger/logger.h>
 
 // test
 #include <test_env.h>

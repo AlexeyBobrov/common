@@ -13,9 +13,9 @@
 #include <gtest/gtest.h>
 
 // this
-#include <logger/logger.h>
-#include <http/http_server.h>
-#include <curl/libcurl.h>
+#include <cmntype/logger/logger.h>
+#include <cmntype/http/http_server.h>
+#include <cmntype/curl/libcurl.h>
 
 namespace common
 {

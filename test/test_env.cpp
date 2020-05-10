@@ -16,8 +16,8 @@
 
 // this
 #include <test_env.h>
-#include <error/error.h>
-#include <logger/logger.h>
+#include <cmntype/error/error.h>
+#include <cmntype/logger/logger.h>
 
 namespace common
 {

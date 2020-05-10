@@ -5,7 +5,7 @@
 //! @copyright Bobrov A.E.
 #include <gtest/gtest.h>
 
-#include <common/utility.h>
+#include <cmntype/common/utility.h>
 
 TEST(TestUtility, TestFromEnum)
 {

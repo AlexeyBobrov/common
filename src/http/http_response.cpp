@@ -9,7 +9,7 @@
 #include <memory>
 
 // this
-#include <http/http_response.h>
+#include <cmntype/http/http_response.h>
 
 namespace common
 {

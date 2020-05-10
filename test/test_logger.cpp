@@ -10,9 +10,9 @@
 
 #include <gtest/gtest.h>
 
-#include <logger/logger.h>
-#include <logger/utility.h>
-#include <logger/types.h>
+#include <cmntype/logger/logger.h>
+#include <cmntype/logger/utility.h>
+#include <cmntype/logger/types.h>
 
 #include <thread>
 #include <sstream>

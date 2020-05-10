@@ -31,7 +31,7 @@ find_package(GTest REQUIRED CONFIG)
 
 # configure file version
 configure_file(
-  "${PROJECT_SOURCE_DIR}/inc/common_version.h.in"
+  "${PROJECT_SOURCE_DIR}/inc/${ProjectName}/common_version.h.in"
   "${PROJECT_BINARY_DIR}/common_version.h"
   )
 
@@ -85,10 +85,10 @@ add_library(${ProjectName} ${SOURCES})
 
 target_include_directories(${ProjectName}
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/>
   $<BUILD_INTERFACE:${Boost_INCLUDE_DIRS}>
   $<BUILD_INTERFACE:${CURL_INCLUDE_DIRS}>
-  $<INSTALL_INTERFACE:include/${ProjectName}>
+  $<INSTALL_INTERFACE:include/>
   )
 
 set_target_properties(${ProjectName} PROPERTIES 
@@ -106,12 +106,12 @@ install(TARGETS ${ProjectName}
   EXPORT ${ProjectName}Targets
   )
 
-install(DIRECTORY inc/common
-  inc/curl
-  inc/error
-  inc/http
-  inc/logger
-  inc/thread
+install(DIRECTORY inc/${ProjectName}/common
+  inc/${ProjectName}/curl
+  inc/${ProjectName}/error
+  inc/${ProjectName}/http
+  inc/${ProjectName}/logger
+  inc/${ProjectName}/thread
   DESTINATION include/${ProjectName}
   )
 

@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <error/error.h>
+#include <cmntype/error/error.h>
 
 TEST(TestCommon, TestCommonError)
 {

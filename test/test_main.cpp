@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 
 // this
-#include <logger/logger.h>
+#include <cmntype/logger/logger.h>
 #include <test_env.h>
 
 

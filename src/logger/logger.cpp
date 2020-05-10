@@ -5,7 +5,7 @@
  */
 
 // declare
-#include <logger/logger.h>
+#include <cmntype/logger/logger.h>
 
 // std
 #include <array>
@@ -39,11 +39,11 @@
 #include <boost/core/null_deleter.hpp>
 
 // this
-#include <logger/config.h>
-#include <logger/utility.h>
+#include <cmntype/logger/config.h>
+#include <cmntype/logger/utility.h>
 
 // error
-#include <error/error.h>
+#include <cmntype/error/error.h>
 
 #include <boost/phoenix/bind.hpp>
 

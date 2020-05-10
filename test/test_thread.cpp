@@ -8,8 +8,8 @@
 
 #include <gtest/gtest.h>
 
-#include <thread/pool_thread.h>
-#include <thread/thread_safe.h>
+#include <cmntype/thread/pool_thread.h>
+#include <cmntype/thread/thread_safe.h>
 
 TEST(TestThread, PoolTheadPostTask)
 {

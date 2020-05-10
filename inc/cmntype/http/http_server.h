@@ -19,7 +19,7 @@
 #include <boost/beast.hpp>
 
 // this
-#include <http/types.h>
+#include <cmntype/http/types.h>
 
 namespace common
 {

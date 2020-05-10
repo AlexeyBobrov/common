@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include <curl/curl_error.h>
+#include <cmntype/curl/curl_error.h>
 
 TEST(TestCurl, CurlThrowSetOptError)
 {

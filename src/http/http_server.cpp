@@ -14,12 +14,12 @@
 #include <boost/assert.hpp>
 
 // this
-#include <http/http_server.h>
-#include <http/types.h>
-#include <http/http_response.h>
-#include <logger/logger.h>
-#include <thread/thread_safe.h>
-#include <common/stopwatch.h>
+#include <cmntype/http/http_server.h>
+#include <cmntype/http/types.h>
+#include <cmntype/http/http_response.h>
+#include <cmntype/logger/logger.h>
+#include <cmntype/thread/thread_safe.h>
+#include <cmntype/common/stopwatch.h>
 
 // to delete
 #include <iostream>

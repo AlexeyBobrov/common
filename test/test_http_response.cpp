@@ -6,9 +6,9 @@
 
 #include <gtest/gtest.h> 
 
-#include <http/http_response.h>
+#include <cmntype/http/http_response.h>
 
-#include <http/types.h>
+#include <cmntype/http/types.h>
 
 namespace http = common::http;
 namespace beast_http = boost::beast::http;

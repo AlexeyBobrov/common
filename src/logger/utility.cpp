@@ -8,8 +8,8 @@
 #include <boost/format.hpp>
 
 // this
-#include <error/error.h>
-#include <logger/utility.h>
+#include <cmntype/error/error.h>
+#include <cmntype/logger/utility.h>
 
 namespace common
 {

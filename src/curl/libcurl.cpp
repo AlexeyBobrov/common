@@ -5,8 +5,8 @@
   * @copyright (c) Bobrov A.E.
   */
 // this
-#include <curl/libcurl.h>
-#include <curl/curl_error.h>
+#include <cmntype/curl/libcurl.h>
+#include <cmntype/curl/curl_error.h>
 
 // std
 #include <memory>

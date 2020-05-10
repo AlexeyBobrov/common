@@ -13,7 +13,7 @@
 #include <boost/thread.hpp>
 
 // this
-#include <thread/pool_thread.h>
+#include <cmntype/thread/pool_thread.h>
 
 namespace common
 {

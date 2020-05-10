@@ -17,7 +17,7 @@
 #include <boost/filesystem.hpp>
 
 // this
-#include <logger/types.h>
+#include <cmntype/logger/types.h>
 
 namespace common
 {
