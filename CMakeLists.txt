@@ -116,7 +116,9 @@ install(DIRECTORY inc/${ProjectName}/common
   )
 
 # install
-install(FILES "${PROJECT_BINARY_DIR}/common_version.h"
+install(FILES 
+  "${PROJECT_BINARY_DIR}/common_version.h"
+  inc/${ProjectName}/config.h
   DESTINATION include/${ProjectName}
   )
 
