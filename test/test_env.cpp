@@ -11,10 +11,10 @@
 #include <fstream>
 
 // boost
-#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 
 // this
+#include <cmntype/config.h>
 #include <test_env.h>
 #include <cmntype/error/error.h>
 #include <cmntype/logger/logger.h>
@@ -48,7 +48,7 @@ namespace test
   </document>
         )";
 
-namespace fs = boost::filesystem;
+namespace fs = filesystem;
 
 const fs::path config = fs::current_path() /  "test_logger.xml";
 
@@ -66,7 +66,7 @@ LogConfigFile::LogConfigFile()
 
 LogConfigFile::~LogConfigFile()
 {
-  boost::system::error_code err;
+  std::error_code err;
   
   fs::remove_all(config_, err);
 }

@@ -16,11 +16,11 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/config.hpp>
-#include <boost/filesystem.hpp>
 
 // gtest
 #include <gtest/gtest.h>
 
+#include <cmntype/config.h>
 #include <cmntype/logger/logger.h>
 
 namespace beast = boost::beast;

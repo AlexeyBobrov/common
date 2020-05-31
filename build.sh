@@ -33,6 +33,10 @@ function build()
   target=$1
 
   cmake --build . --target $target
+
+  if [ $? -ne 0 ]; then
+    exit $?
+  fi
 }
 
 case $1 in

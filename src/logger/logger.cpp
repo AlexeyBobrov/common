@@ -39,6 +39,7 @@
 #include <boost/core/null_deleter.hpp>
 
 // this
+#include <cmntype/config.h>
 #include <cmntype/logger/config.h>
 #include <cmntype/logger/utility.h>
 
@@ -66,7 +67,6 @@ namespace log = boost::log;
 
 //--------------------------------------------------------------------------------------------
 using sev_log_t = sources::severity_logger_mt<Severity>;
-// using file_sink_t = sinks::asynchronous_sink<sinks::text_file_backend>;
 using file_sink_t = sinks::synchronous_sink<sinks::text_file_backend>;
 using file_sink_ptr_t = boost::shared_ptr<file_sink_t>;
 using debug_sink_t = sinks::asynchronous_sink<sinks::text_ostream_backend>;
@@ -80,7 +80,6 @@ void AddAttribute(std::string_view name)
   if (!it.second)
   {
     // TODO: Удаление всех атрибутов при деинициализации
-    //THROW_COMMON_ERROR((boost::format("Is not added attribute '%1%'") % name).str());
   }
 }
 
@@ -199,9 +198,7 @@ bool Filter(const log::attribute_value_set &set, Severity level)
 //--------------------------------------------------------------------------------------------
 file_sink_ptr_t CreateFileSink(const config::Configuration &conf)
 {
-  namespace fs = boost::filesystem;
-
-  fs::path filename{conf.workdir};
+  auto filename{conf.workdir};
   filename /= conf.filename;
 
   using file_text_backend_t = sinks::text_file_backend;
@@ -279,7 +276,7 @@ void Logger::Init()
   InitLog(config::Configuration());
 }
 //--------------------------------------------------------------------------------------------
-void Logger::InitFromFile(const boost::filesystem::path &filename)
+void Logger::InitFromFile(const filesystem::path &filename)
 {
   const auto conf = config::ReadFile(filename);
   InitLog(conf);

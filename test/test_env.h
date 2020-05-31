@@ -6,13 +6,11 @@
  */
 #pragma once
 
-// boost
-#include <boost/filesystem.hpp>
-
 // gtest
 #include <gtest/gtest.h>
 
 // this
+#include <cmntype/config.h>
 #include <cmntype/logger/logger.h>
 #include <cmntype/http/http_server.h>
 #include <cmntype/curl/libcurl.h>
@@ -32,7 +30,7 @@ public:
   LogConfigFile& operator=(LogConfigFile&&) = default;
   ~LogConfigFile();
 private:
-  boost::filesystem::path config_;
+  filesystem::path config_;
 };
 
 class TestEnvironment final : public ::testing::Environment

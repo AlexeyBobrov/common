@@ -8,13 +8,13 @@
 #include <chrono>
 
 // boost
-#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 
 // gtest
 #include <gtest/gtest.h>
 
 // common
+#include <cmntype/config.h>
 #include <cmntype/http/http_server.h>
 #include <cmntype/logger/logger.h>
 
@@ -26,7 +26,7 @@ namespace common
 namespace test
 {
 
-namespace fs = boost::filesystem;
+namespace fs = filesystem;
 namespace env = common::test;
 
 static constexpr std::string_view resource { "/test" };

@@ -3,13 +3,13 @@
 /// @author Bobrov A.E.
 /// @date 20.10.2019
 
-#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
 #include <gtest/gtest.h>
 
+#include <cmntype/config.h>
 #include <cmntype/logger/logger.h>
 #include <cmntype/logger/utility.h>
 #include <cmntype/logger/types.h>
@@ -17,7 +17,7 @@
 #include <thread>
 #include <sstream>
 
-namespace fs = boost::filesystem;
+namespace fs = filesystem;
 namespace logger = common::logger;
 namespace pt = boost::property_tree;
 

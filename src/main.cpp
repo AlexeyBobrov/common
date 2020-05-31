@@ -1,19 +1,18 @@
 #include <iostream>
 
 #include <boost/core/ignore_unused.hpp>
-#include <boost/filesystem.hpp>
 
-#include <logger/logger.h>
-#include <logger/config.h>
+#include <cmntype/config.h>
+
+#include <cmntype/logger/logger.h>
+#include <cmntype/logger/config.h>
 
 int main( int argc, char* argv[] )
 {
   boost::ignore_unused( argc );
   boost::ignore_unused( argv );
   
-  namespace fs = boost::filesystem;
-
-  const fs::path config{ "config/logger.xml" };
+  const filesystem::path config{ "config/logger.xml" };
  
   namespace logger = common::logger;
 

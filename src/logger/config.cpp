@@ -15,6 +15,7 @@
 #include <stdexcept>
 
 // this
+#include <cmntype/config.h>
 #include <cmntype/error/error.h>
 #include <cmntype/logger/config.h>
 
@@ -24,7 +25,6 @@ namespace logger
 {
 namespace config
 {
-namespace fs = boost::filesystem;
 namespace pt = boost::property_tree;
 //--------------------------------------------------------------------------------------------
 std::string_view Configuration::AttributesValues::process_id = "ProcessID";
@@ -34,9 +34,9 @@ std::string_view Configuration::AttributesValues::filename = "File";
 std::string_view Configuration::AttributesValues::function = "Function";
 std::string_view Configuration::AttributesValues::line = "Line";
 //---------------------------------------------------------------------------------------------------------
-Configuration ReadFile(const boost::filesystem::path &filename)
+Configuration ReadFile(const filesystem::path &filename)
 {
-  if (!fs::exists(filename))
+  if (!filesystem::exists(filename))
   {
     THROW_COMMON_ERROR((boost::format("is not exists file '%1%'") % filename.string()).str());
   }
@@ -51,7 +51,7 @@ Configuration ReadFile(const boost::filesystem::path &filename)
     if (auto log_conf = document.get_child_optional("document.logger"))
     {
       conf.stdoutput = log_conf->get("stdout", false);
-      conf.workdir = log_conf->get<fs::path>("workdir");
+      conf.workdir = log_conf->get<filesystem::path>("workdir");
       conf.filename = log_conf->get<std::string>("filename");
       auto level = log_conf->get<std::string>("level");
       boost::to_upper(level);

@@ -13,10 +13,8 @@
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/utility/manipulators/add_value.hpp>
 
-// filesystem
-#include <boost/filesystem.hpp>
-
 // this
+#include <cmntype/config.h>
 #include <cmntype/logger/types.h>
 
 namespace common
@@ -30,7 +28,7 @@ class Logger final
   static void Init();
   /// @brief initialization logger from filename
   /// @param filename - filename configuration
-  static void InitFromFile(const boost::filesystem::path &filename);
+  static void InitFromFile(const filesystem::path &filename);
   /// @brief deinit logger
   static void DeInit();
 };

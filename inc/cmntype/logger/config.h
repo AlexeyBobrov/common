@@ -12,8 +12,7 @@
 #include <string>
 #include <string_view>
 
-// boost
-#include <boost/filesystem.hpp>
+#include <cmntype/config.h>
 
 namespace common
 {
@@ -58,7 +57,7 @@ struct Configuration
   };
 
   bool stdoutput{true};
-  boost::filesystem::path workdir = boost::filesystem::current_path();
+  filesystem::path workdir = filesystem::current_path();
   std::string filename = "geocoder_%Y-%m-%d_%H-%M-%S.%N.log";
   Rotation rotation;
   Time time_type{Time::utc};
@@ -68,7 +67,7 @@ struct Configuration
 };
 
 /** @brief read configuration from file */
-Configuration ReadFile(const boost::filesystem::path &filename);
+Configuration ReadFile(const filesystem::path &filename);
 }  // namespace config
 }  // namespace logger
 }  // namespace common
