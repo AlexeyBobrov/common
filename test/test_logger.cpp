@@ -11,8 +11,10 @@
 
 #include <cmntype/config.h>
 #include <cmntype/logger/logger.h>
+#include <cmntype/logger/config.h>
 #include <cmntype/logger/utility.h>
 #include <cmntype/logger/types.h>
+#include <test_env.h>
 
 #include <thread>
 #include <sstream>
@@ -20,75 +22,48 @@
 namespace fs = filesystem;
 namespace logger = common::logger;
 namespace pt = boost::property_tree;
+namespace config = logger::config;
 
-constexpr auto LogConfigTest = 
-R"(<?xml version="1.0" encoding="UTF-8"?>
-  <document>
-    <logger>
-      <stdout>true</stdout>
-      <time>utc</time>
-      <level>trace</level>
-      <workdir>bin</workdir>
-      <filename>logger.%N.log</filename>
-      <rotation>
-        <type>size</type>
-        <period>3600</period>
-        <size>10000</size>
-      </rotation>
-      <attributes>
-        <threadid>true</threadid>
-        <processid>true</processid>
-        <filename>true</filename>
-        <function>true</function>
-        <line>true</line>
-      </attributes>
-    </logger>
-  </document>
-        )";
 
 class LogTest : public ::testing::Test
 {
  public:
   LogTest()
-   : confPath_(fs::current_path() / "test_logger.xml")
   {
-    std::istringstream in(LogConfigTest);
-    pt::read_xml(in, config_);
-
-    if (auto document = config_.get_child_optional("document"))
-    {
-      if (auto logger = document->get_child_optional("logger"))
-      {
-        logger->put(pt::ptree::path_type{"workdir"}, fs::current_path().string());
-      }
-    }
-
-    pt::write_xml(confPath_.string(), config_);
   }
   
   ~LogTest()
   {
-    fs::remove( confPath_ );
   }
 
-  virtual void SetUp() override {}
+  virtual void SetUp() override 
+  {
+  }
 
-  virtual void TearDown() override {}
+  virtual void TearDown() override 
+  {
+    std::error_code err;
+    fs::remove_all(ConfigFullFileName, err);
+  }
 
  protected:
-  const fs::path& GetFileConfig() const { return confPath_; }
- private:
-  pt::ptree config_;
-  fs::path confPath_;
+  void WriteXml(std::string_view data)
+  {
+    std::ofstream fout(ConfigFullFileName);
+    
+    fout.write(data.data(), data.size());
+
+    fout.close();
+  }
+
+  static const fs::path ConfigFullFileName;
 };
+
+const fs::path LogTest::ConfigFullFileName = fs::current_path() / "config.xml.tmp";
+
 
 TEST_F(LogTest, InitLogger)
 {
-  const auto& pathConfig = GetFileConfig();
-
-  ASSERT_TRUE(fs::exists(pathConfig));
-
-  ASSERT_NO_THROW(logger::Logger::InitFromFile(pathConfig));
   auto& log = Logger::get();
   LOG_INFO(log) << "Info";
   LOG_WARNING(log) << "Warning";
@@ -97,7 +72,6 @@ TEST_F(LogTest, InitLogger)
   LOG_FATAL(log) << "Fatal";
   LOG_DEBUG(log) << "Debug";
   LOG_TRACE(log) << "Trace";
-  logger::Logger::DeInit();
 }
 
 TEST_F(LogTest, SeverityToText)
@@ -129,3 +103,132 @@ TEST_F(LogTest, SeverityFromText)
 
   ASSERT_THROW(utils::SeverityFromText("unk"), std::exception);
 }
+
+TEST_F(LogTest, InvalidFile)
+{
+  ASSERT_ANY_THROW(common::logger::Logger::InitFromFile("C:\\test.txt"));
+}
+
+TEST_F(LogTest, InvalidConfig1)
+{
+  config::Configuration config;
+  ASSERT_ANY_THROW(config = config::ReadFile(ConfigFullFileName));
+}
+
+TEST_F(LogTest, InvalidConfig2)
+{
+  constexpr std::string_view LogConfig = 
+    R"(<?xml version="1.0" encoding="UTF-8"?>
+  <document>
+    <logger1>
+      <stdout>false</stdout>
+      <time>local</time>
+      <level>trace</level>
+      <workdir>log</workdir>
+      <filename>logger.%N.log</filename>
+      <rotation>
+        <type>size</type>
+        <period>3600</period>
+        <size>10000</size>
+      </rotation>
+      <attributes>
+        <threadid>true</threadid>
+        <processid>false</processid>
+        <filename>true</filename>
+        <function>true</function>
+        <line>true</line>
+      </attributes>
+    </logger1>
+  </document>
+        )";
+
+  
+  WriteXml(LogConfig);
+
+  config::Configuration config;
+  ASSERT_ANY_THROW(config = config::ReadFile(ConfigFullFileName));
+}
+
+TEST_F(LogTest, InvalidConfig3)
+{
+  constexpr std::string_view LogConfig = 
+    R"(<?xml version="1.0" encoding="UTF-8"?>
+  <document>
+    <logger>
+      <stdout>false</stdout>
+      <time>l</time>
+      <level>trace</level>
+      <workdir>log</workdir>
+      <filename>logger.%N.log</filename>
+      <rotation>
+        <type>size</type>
+        <period>3600</period>
+        <size>10000</size>
+      </rotation>
+      <attributes>
+        <threadid>true</threadid>
+        <processid>false</processid>
+        <filename>true</filename>
+        <function>true</function>
+        <line>true</line>
+      </attributes>
+    </logger>
+  </document>
+        )";
+
+  
+  WriteXml(LogConfig);
+
+  config::Configuration config;
+  ASSERT_ANY_THROW(config = config::ReadFile(ConfigFullFileName));
+}
+
+TEST_F(LogTest, ValidConfig)
+{
+  constexpr std::string_view LogConfig = 
+    R"(<?xml version="1.0" encoding="UTF-8"?>
+  <document>
+    <logger>
+      <stdout>true</stdout>
+      <time>utc</time>
+      <level>trace</level>
+      <workdir>log</workdir>
+      <filename>logger.%N.log</filename>
+      <rotation>
+        <type>size</type>
+        <period>3600</period>
+        <size>10000</size>
+      </rotation>
+      <attributes>
+        <threadid>true</threadid>
+        <processid>false</processid>
+        <filename>true</filename>
+        <function>true</function>
+        <line>true</line>
+      </attributes>
+    </logger>
+  </document>
+        )";
+
+  
+  WriteXml(LogConfig);
+
+  config::Configuration config;
+  ASSERT_NO_THROW(config = config::ReadFile(ConfigFullFileName));
+
+  ASSERT_EQ(config.filename, std::string("logger.%N.log"));
+  ASSERT_TRUE(config.stdoutput);
+  ASSERT_EQ(config.workdir, fs::path("log"));
+  ASSERT_EQ(config.level, std::string("TRACE"));
+  ASSERT_EQ(config.rotation.type, config::Configuration::Rotation::Type::size);
+  ASSERT_EQ(config.rotation.size, 10000);
+
+  ASSERT_FALSE(config.attributes[config::Configuration::AttributesValues::process_id]);
+  ASSERT_TRUE(config.attributes[config::Configuration::AttributesValues::thread_id]);
+  ASSERT_TRUE(config.attributes[config::Configuration::AttributesValues::timestamp]);
+  ASSERT_TRUE(config.attributes[config::Configuration::AttributesValues::filename]);
+  ASSERT_TRUE(config.attributes[config::Configuration::AttributesValues::function]);
+  ASSERT_TRUE(config.attributes[config::Configuration::AttributesValues::line]);
+
+}
+

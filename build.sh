@@ -24,7 +24,7 @@ function init()
   
   mkdir -p $install_dir
 
-  cmake -DCMAKE_INSTALL_PREFIX:PATH="${install_dir}" .. --log-level=$log_level
+  cmake -DCMAKE_INSTALL_PREFIX:PATH="${install_dir}" .. --log-level=$log_level #-DCMAKE_BUILD_TYPE=Debug
 }
 
 function build()

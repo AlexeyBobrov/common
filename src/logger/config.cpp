@@ -111,10 +111,6 @@ Configuration ReadFile(const filesystem::path &filename)
       THROW_COMMON_ERROR((boost::format("is not found section 'logger' into configuration file '%1%'") % filename.string()).str());
     }
   }
-  catch (const std::runtime_error &)
-  {
-    throw;
-  }
   catch (const std::exception &err)
   {
     THROW_COMMON_ERROR((boost::format("Is not read file '%1%' (%2%)") % filename.string() % err.what()).str());

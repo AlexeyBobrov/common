@@ -27,9 +27,9 @@ namespace test
     R"(<?xml version="1.0" encoding="UTF-8"?>
   <document>
     <logger>
-      <stdout>false</stdout>
-      <time>utc</time>
-      <level>trace</level>
+      <stdout>true</stdout>
+      <time>local</time>
+      <level>debug</level>
       <workdir>log</workdir>
       <filename>logger.%N.log</filename>
       <rotation>
@@ -39,7 +39,7 @@ namespace test
       </rotation>
       <attributes>
         <threadid>true</threadid>
-        <processid>true</processid>
+        <processid>false</processid>
         <filename>true</filename>
         <function>true</function>
         <line>true</line>
@@ -50,46 +50,40 @@ namespace test
 
 namespace fs = filesystem;
 
-const fs::path config = fs::current_path() /  "test_logger.xml";
+const fs::path config = fs::current_path() / "test_config.xml";
 
-LogConfigFile::LogConfigFile()
-: config_{fs::current_path() / "test_config.xml"}
-{
-  {
-    std::ofstream fout{config_.c_str()};
-    fout.write(LogConfig.data(), LogConfig.size());
-    fout.close();
-  }
-  
-  common::logger::Logger::InitFromFile(config_);
-}
-
-LogConfigFile::~LogConfigFile()
-{
-  std::error_code err;
-  
-  fs::remove_all(config_, err);
-}
-
-http::HttpServer TestEnvironment::httpServer_{ ip_, port_, threads_ };
+std::shared_ptr<http::HttpServer> TestEnvironment::httpServer_;//{ ip_, port_, threads_ };
 curl::LibCurl TestEnvironment::curl_;
 
-Logger::logger_type& TestEnvironment::GetLogger()
+
+TestEnvironment::TestEnvironment()
 {
-  return Logger::get();
+  httpServer_ = std::make_shared<http::HttpServer>(ip_, port_, threads_);
+
+  std::ofstream fout{config.c_str()};
+  fout.write(LogConfig.data(), LogConfig.size());
+  fout.close();
+ 
+  common::logger::Logger::InitFromFile(config);
+}
+
+TestEnvironment::~TestEnvironment()
+{
+  std::error_code code;
+  fs::remove_all(config, code);
 }
 
 void TestEnvironment::SetUp()
 {
-  httpServer_.Start();
+  httpServer_->Start(); 
 }
 
 void TestEnvironment::TearDown()
 {
-  httpServer_.Stop();
+  httpServer_->Stop();
 }
 
-http::HttpServer& TestEnvironment::GetHttpServer()
+std::shared_ptr<http::HttpServer> TestEnvironment::GetHttpServer()
 {
   return httpServer_;
 }

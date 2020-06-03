@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document>
 	<logger>
-		<stdout>true</stdout>
+		<stdout>false</stdout>
 		<!-- время отображаемое в логе (utc, или локальное) -->
 		<time>utc</time>
                 <workdir>bin/log/</workdir>
@@ -17,7 +17,7 @@
 		</rotation>
 		<attributes>
 			<threadid>true</threadid>
-                        <processid>true</processid>
+                        <processid>false</processid>
                         <debug>
                           <file>true</file>
                           <function>true</function>

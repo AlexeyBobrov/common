@@ -92,12 +92,36 @@ void Print(std::ostringstream &ss, const Type &value)
 template <typename AttributeType>
 void FormatAttribute(const config::Configuration::Attributes &attrs, std::string_view name, const log::record_view &record, std::ostringstream &ss)
 {
-  if (attrs.count(name))
+  const auto& attrIt = attrs.find(name);
+  if (std::cend(attrs) != attrIt)
   {
-    const auto &value = log::extract<AttributeType>(name.data(), record);
-    if (value)
+    const auto&it = attrs.find(name);
+    if (it->second)
     {
-      Print(std::ref(ss), value.get());
+      const auto &value = log::extract<AttributeType>(name.data(), record);
+      if (value)
+      {
+        Print(std::ref(ss), value.get());
+      }
+    }
+  }
+}
+
+void FormatFileName(const config::Configuration::Attributes& attrs, const log::record_view &record, std::ostringstream& ss)
+{
+  const auto& attrFileName = config::Configuration::AttributesValues::filename;
+
+  const auto& attrIt = attrs.find(attrFileName);
+  if (std::cend(attrs) != attrIt)
+  {
+    if (attrIt != attrs.end())
+    {
+      const auto& value = log::extract<std::string>(attrFileName.data(), record);
+      if (value)
+      {
+        filesystem::path fileName{value.get()};
+        Print(std::ref(ss), fileName.filename().string());
+      }
     }
   }
 }
@@ -173,10 +197,8 @@ void Format(const config::Configuration &conf, const log::record_view &record, l
 
   Print(std::ref(tmp), text);
 
-  FormatAttribute<std::string>(std::cref(attrs), config::Configuration::AttributesValues::filename, std::cref(record), std::ref(tmp));
-
   FormatAttribute<std::string>(std::cref(attrs), config::Configuration::AttributesValues::function, std::cref(record), std::ref(tmp));
-
+  FormatFileName(attrs, record, tmp);
   FormatAttribute<int>(std::cref(attrs), config::Configuration::AttributesValues::line, std::cref(record), std::ref(tmp));
 
   const auto msg = record.attribute_values()["Message"].extract<std::string>().get();

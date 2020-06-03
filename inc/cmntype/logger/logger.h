@@ -41,7 +41,7 @@ BOOST_LOG_GLOBAL_LOGGER(Logger, common::logger::SeverityLogger)
 /// @brief for debug, trace message
 #define BOOST_LOG_SEV_ADD(lg, sv)                                                                             \
   BOOST_LOG_SEV(lg, sv) << boost::log::add_value("Line", __LINE__) << boost::log::add_value("File", __FILE__) \
-                        << boost::log::add_value("Function", BOOST_CURRENT_FUNCTION)
+                        << boost::log::add_value("Function", __FUNCTION__)
 
 /// @brief information message
 #define LOG_INFO(lg) BOOST_LOG_SEV(lg, common::logger::Severity::info)
@@ -68,5 +68,21 @@ BOOST_LOG_GLOBAL_LOGGER(Logger, common::logger::SeverityLogger)
 #define LOG_STDOUT_TRACE(text)                                                  \
     std::cout << "[" << __PRETTY_FUNCTION__ << "][" << __LINE__ << "]:  "       \
     << text << std::endl
+
+#define COMMON_LOG_INFO() LOG_INFO(Logger::get())
+
+#define COMMON_LOG_WARNING() LOG_WARNING(Logger::get())
+
+#define COMMON_LOG_ERROR() LOG_ERROR(Logger::get())
+
+#define COMMON_LOG_CRITICAL() LOG_CRITICAL(Logger::get())
+
+#define COMMON_LOG_FATAL() LOG_FATAL(Logger::get())
+
+#define COMMON_LOG_DEBUG() LOG_DEBUG(Logger::get())
+
+#define COMMON_LOG_TRACE() LOG_TRACE(Logger::get())
+
+
 
 #endif

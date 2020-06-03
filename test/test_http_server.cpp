@@ -72,7 +72,7 @@ public:
 
       tests_.emplace(boost::beast::http::verb::get, test);
 
-      GetServer().AddRequestHandler(resource.data(), boost::beast::http::verb::get, test.handler);
+      GetServer()->AddRequestHandler(resource.data(), boost::beast::http::verb::get, test.handler);
     }
 
     // POST request
@@ -97,7 +97,7 @@ public:
 
       tests_.emplace(boost::beast::http::verb::post, test);
 
-      GetServer().AddRequestHandler(resource.data(), boost::beast::http::verb::post, test.handler);
+      GetServer()->AddRequestHandler(resource.data(), boost::beast::http::verb::post, test.handler);
     }
 
     // PUT request
@@ -122,7 +122,7 @@ public:
 
       tests_.emplace(boost::beast::http::verb::put, test);
 
-      GetServer().AddRequestHandler(resource.data(), boost::beast::http::verb::put, test.handler);
+      GetServer()->AddRequestHandler(resource.data(), boost::beast::http::verb::put, test.handler);
     }
 
     // DELETE request
@@ -148,7 +148,7 @@ public:
 
       tests_.emplace(boost::beast::http::verb::delete_, test);
 
-      GetServer().AddRequestHandler(resource.data(), boost::beast::http::verb::delete_, test.handler);
+      GetServer()->AddRequestHandler(resource.data(), boost::beast::http::verb::delete_, test.handler);
     }
     
   }
@@ -160,9 +160,9 @@ public:
   {
   }
 protected:
-  http::HttpServer& GetServer()
+  std::shared_ptr<http::HttpServer> GetServer()
   {
-    return TestEnvironment::GetHttpServer();
+    return server_;
   }
   
   curl::LibCurl& GetCurl()
@@ -184,7 +184,7 @@ protected:
 private:
   std::string url_;
   Tests tests_;
-  Logger::logger_type& logger_{env::TestEnvironment::GetLogger()};
+  std::shared_ptr<http::HttpServer> server_{TestEnvironment::GetHttpServer()};
 };
 
 TEST_F(HttpServerTest, GetRequest)

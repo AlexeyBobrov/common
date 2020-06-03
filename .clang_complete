@@ -2,6 +2,4 @@
 -Isrc/
 -Iinc/
 -Ibuild/
--I3rdparty/googletest/googletest-src/googletest/include
--I/opt/local/include
 -Itest/

@@ -20,27 +20,15 @@ namespace common
 namespace test
 {
 
-class LogConfigFile final
-{
-public:
-  LogConfigFile();
-  LogConfigFile(const LogConfigFile&) = delete;
-  LogConfigFile& operator=(const LogConfigFile&) = delete;
-  LogConfigFile(LogConfigFile&&) = default;
-  LogConfigFile& operator=(LogConfigFile&&) = default;
-  ~LogConfigFile();
-private:
-  filesystem::path config_;
-};
-
 class TestEnvironment final : public ::testing::Environment
 {
 public:
-  static Logger::logger_type& GetLogger();
-  static http::HttpServer& GetHttpServer();
+  static std::shared_ptr<http::HttpServer> GetHttpServer();
   static curl::LibCurl& GetCurl();
   static constexpr std::string_view GetIp() { return ip_; }
   static constexpr std::uint16_t GetPort() { return port_; }
+  TestEnvironment();
+  ~TestEnvironment();
   virtual void SetUp() override;
   virtual void TearDown() override;
 private:
@@ -48,8 +36,7 @@ private:
   static constexpr std::string_view ip_ { "127.0.0.1" };
   static constexpr std::uint16_t port_ { 8080 };
   static constexpr std::uint16_t threads_{ 4 };
-  static http::HttpServer httpServer_;
-  LogConfigFile config_;
+  static std::shared_ptr<http::HttpServer> httpServer_;
 };
 }
 }

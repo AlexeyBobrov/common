@@ -12,6 +12,7 @@
 // boost
 #include <boost/asio.hpp>
 #include <boost/assert.hpp>
+#include <boost/bind/bind.hpp>
 
 // this
 #include <cmntype/http/http_server.h>
@@ -76,6 +77,7 @@ public:
   , port_(port)
   , protocol_(boost::asio::ip::make_address(ip_.data()), port_)
   , pool_(threads)
+  , io_{1}
   {
   }
   
@@ -85,53 +87,63 @@ public:
     exit_ = false;
 
     std::thread t{std::bind(&Impl::Run, this)};
-    thrAcceptor_ = std::make_unique<thread::ThreadSafe>(std::move(t));
+    worker_ = std::make_unique<thread::ThreadSafe>(std::move(t));
     
-    auto& logger = Logger::get();
-    LOG_INFO(logger) << "Start http server, ip = " << ip_.data() << ", port = " << port_;
+    COMMON_LOG_INFO() << "Start http server, ip = " << ip_.data() << ", port = " << port_;
+    
   }
 
   // thread acceptor
   void Run()
   {
-    auto& logger = Logger::get();
+    COMMON_LOG_INFO() << "Start working thread";
 
     try
     {
-      LOG_DEBUG(logger) << "Start acceptor thread.";
+      acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(io_, protocol_);
+      auto socket = std::make_shared<boost::asio::ip::tcp::socket>(io_);
+      
+      COMMON_LOG_DEBUG() << "Waiting new connection";
 
-      boost::asio::io_context io{1};
-      acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(io, protocol_);
+      acceptor_->async_accept(*socket, boost::bind(&Impl::Accept, this, boost::asio::placeholders::error, socket));
       
       while (!exit_)
       {
-        // This will receive the new connection
-        boost::asio::ip::tcp::socket socket{io};
-        
-        // Block until we get a connection
-        acceptor_->accept(socket);
+        io_.run();
 
-        // Launch the session, transferring ownership of the socket
-        boost::asio::post(pool_, std::bind(&Impl::DoSession, this, std::ref(socket)));
-
-        // Timeout thread
         std::this_thread::sleep_for(waitThr_);
       }
     }
     catch (const std::exception& err)
     {
-      LOG_ERROR(logger) << "Error acceptor thread: '" << err.what() << "'";
+      COMMON_LOG_ERROR() << "Error acceptor thread: '" << err.what() << "'";
     }
 
-    LOG_DEBUG(logger) << "Complete acceptor thread.";
+    COMMON_LOG_INFO() << "Complete working thread.";
+  }
+
+  void Accept(const boost::system::error_code& error,
+      std::shared_ptr<boost::asio::ip::tcp::socket> socket)
+  {
+    if (error)
+    {
+      COMMON_LOG_ERROR() << "Error accepting connection: " << error.message();
+    }
+
+    COMMON_LOG_INFO() << "New connection accepted";
+
+    boost::asio::post(pool_, std::bind(&Impl::DoSession, this, socket));
+      
+    auto socketNew = std::make_shared<boost::asio::ip::tcp::socket>(io_);
+    acceptor_->async_accept(*socketNew, boost::bind(&Impl::Accept, this, boost::asio::placeholders::error, socket));
   }
 
   // The process session
-  void DoSession(boost::asio::ip::tcp::socket& socket)
+  void DoSession(std::shared_ptr<boost::asio::ip::tcp::socket> socket)
   {
-    auto& logger = Logger::get();
+    BOOST_ASSERT_MSG(socket, "Socket pointer cannot be null");
 
-    LOG_DEBUG(logger) << "Start processing new session"; 
+    COMMON_LOG_INFO() << "Start processing new session"; 
     
     bool close{false};
     boost::beast::error_code error;
@@ -140,13 +152,13 @@ public:
     boost::beast::flat_buffer buffer;
 
     // functional object for response
-    Send<boost::asio::ip::tcp::socket> sender{socket, close, error};
+    Send<boost::asio::ip::tcp::socket> sender{*socket, close, error};
 
     while (!exit_)
     {
       // Read a request
       HttpRequest request;
-      boost::beast::http::read(socket, buffer, request, error);
+      boost::beast::http::read(*socket, buffer, request, error);
 
       if (error == boost::beast::http::error::end_of_stream)
       {
@@ -155,7 +167,7 @@ public:
 
       if (error)
       {
-        LOG_ERROR(logger) << "Error on read: " << error.message();
+        COMMON_LOG_ERROR() << "Error on read: " << error.message();
         return;
       }
 
@@ -164,13 +176,13 @@ public:
 
       if (error)
       {
-        LOG_ERROR(logger) << "Error sending response";
+        COMMON_LOG_ERROR() << "Error sending response";
       }
     }
 
     boost::beast::error_code ec;
-    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
-    LOG_DEBUG(logger) << "Complete processing session";
+    socket->shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+    COMMON_LOG_INFO() << "Complete processing session";
   }
 
   template <typename Sender>
@@ -181,8 +193,8 @@ public:
     const auto& uri = request.target();
     const auto& verb = request.method();
 
-    auto& logger = Logger::get();
-    LOG_TRACE(logger) << "Search handlers for uri '" << uri << "', method  '" << verb << "'";
+    COMMON_LOG_TRACE() << "Search handlers for uri '" << uri << "', method  '" << verb << "'";
+
     auto handlersUri = handlers_.equal_range(std::string(uri));
     
     RequestHandler handler;
@@ -202,17 +214,17 @@ public:
     {
       Stopwatch watch;
       auto response = handler(request);
-      LOG_TRACE(logger) << "Request processing completed " << (watch.Get() * 1000.0) << " ms" ;
+      COMMON_LOG_TRACE() << "Request processing completed " << (watch.Get() * 1000.0) << " ms" ;
       sender(response);
     }
     else
     {
-      LOG_WARNING(logger) << "Not found handler for uri '" << uri << "', method '" << verb << "'";
+      COMMON_LOG_WARNING() << "Not found handler for uri '" << uri << "', method '" << verb << "'";
       auto response = MakeResponseForNotFound(request, "application/json", "UTF-8", "not found");
       sender(response);
     }
     
-    LOG_TRACE(logger) << "Complete dispatch request";
+    COMMON_LOG_TRACE() << "Complete dispatch request";
   }
 
   void Stop()
@@ -220,28 +232,28 @@ public:
     if (!stopped_)
     {
       exit_ = true;
+      io_.stop();
+
       if (acceptor_)
       {
         acceptor_->cancel();
         acceptor_->close();
         acceptor_.reset();
       }
-      if (thrAcceptor_)
+      if (worker_)
       {
-        thrAcceptor_->Join();
-        thrAcceptor_.reset();
+        worker_->Join();
+        worker_.reset();
       }
 
-    
       pool_.stop();
       pool_.join();
 
-      auto& logger = Logger::get();
-      LOG_INFO(logger) << "Stop http server";
       stopped_ = true;
     }
   }
-  
+
+ 
   ~Impl()
   {
     Stop();
@@ -251,9 +263,7 @@ public:
   {
     std::unique_lock<Mutex> lock(m_);
 
-    auto& logger = Logger::get();
-
-    LOG_TRACE(logger) << "Adding handler for uri = '" << std::string(uri) << "', method = '" << method << "'";;
+    COMMON_LOG_TRACE() << "Adding handler for uri = '" << std::string(uri) << "', method = '" << method << "'";;
 
     auto handlers = handlers_.equal_range(std::string(uri));
 
@@ -277,7 +287,7 @@ public:
       contextIt->second.handler = handler;
     }
 
-    LOG_INFO(logger) << "count handlers: " << handlers_.size();
+    COMMON_LOG_TRACE() << "count handlers: " << handlers_.size();
   }
 private:
   std::string_view ip_;
@@ -288,8 +298,9 @@ private:
   std::atomic<bool> stopped_ { false };
   Handlers handlers_;
   boost::asio::thread_pool pool_;
-  std::unique_ptr<thread::ThreadSafe> thrAcceptor_;
+  std::unique_ptr<thread::ThreadSafe> worker_;
   Mutex m_;
+  boost::asio::io_service io_;
 
   static constexpr std::chrono::milliseconds waitThr_ {60};
 };
