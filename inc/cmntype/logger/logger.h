@@ -66,7 +66,7 @@ BOOST_LOG_GLOBAL_LOGGER(Logger, common::logger::SeverityLogger)
 
 /// @brief stdout message
 #define LOG_STDOUT_TRACE(text)                                                  \
-    std::cout << "[" << __PRETTY_FUNCTION__ << "][" << __LINE__ << "]:  "       \
+    std::cout << "[" << FUNCNAME << "][" << __LINE__ << "]:  "       \
     << text << std::endl
 
 #define COMMON_LOG_INFO() LOG_INFO(Logger::get())

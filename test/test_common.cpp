@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <cmntype/error/error.h>
+#include <cmntype/config.h>
 
 TEST(TestCommon, TestCommonError)
 {
@@ -19,9 +20,9 @@ TEST(TestCommon, TestCommonError)
   }
   catch (const common::error::Error& err)
   {
-    ASSERT_EQ(err.GetLine(), 18);
+    ASSERT_EQ(err.GetLine(), 19);
     ASSERT_EQ(err.GetFileName(), __FILE__ );
-    ASSERT_EQ(err.GetFunction(), __PRETTY_FUNCTION__ );
+    ASSERT_EQ(err.GetFunction(), FUNCNAME );
     ASSERT_EQ(err.GetText(), textError);
   }
 }

@@ -9,6 +9,8 @@
 #include <string>
 #include <stdexcept>
 
+#include <cmntype/config.h>
+
 namespace common
 {
 namespace error
@@ -34,4 +36,4 @@ class Error : public std::runtime_error
 
 
 #define THROW_COMMON_ERROR( text ) \
-  throw common::error::Error( __PRETTY_FUNCTION__, __LINE__, __FILE__, text )
+  throw common::error::Error(FUNCNAME, __LINE__, __FILE__, text)

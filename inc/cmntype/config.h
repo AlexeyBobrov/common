@@ -18,3 +18,13 @@ namespace filesystem = std::filesystem;
 namespace filesystem = boost::filesystem;
 
 #endif
+
+#if defined(_WIN32) || defined(_WIN64)
+
+#define FUNCNAME __FUNCTION__
+
+#else
+
+#define FUNCNAME __PRETTY_FUNCTION__
+
+#endif

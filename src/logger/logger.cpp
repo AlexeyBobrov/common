@@ -12,6 +12,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <atomic>
 
 // boost
 //  common
@@ -236,7 +237,8 @@ file_sink_ptr_t CreateFileSink(const config::Configuration &conf)
   }
   else if (conf.rotation.type == config::Configuration::Rotation::Type::size)
   {
-    backend = boost::make_shared<file_text_backend_t>(keywords::file_name = filename.string(), keywords::rotation_size = conf.rotation.size);
+    auto sizeMb = conf.rotation.size * 1024 * 1024;
+    backend = boost::make_shared<file_text_backend_t>(keywords::file_name = filename.string(), keywords::rotation_size = sizeMb);
   }
   else
   {
@@ -267,6 +269,8 @@ debug_sink_ptr_t CreateStdoutSink(const config::Configuration &conf)
   return sink;
 }
 //--------------------------------------------------------------------------------------------
+std::atomic<bool> g_init{false};
+//--------------------------------------------------------------------------------------------
 // init logger
 void InitLog(const config::Configuration &conf)
 {
@@ -296,12 +300,17 @@ void Logger::Init()
 {
   // default settings
   InitLog(config::Configuration());
+    
 }
 //--------------------------------------------------------------------------------------------
 void Logger::InitFromFile(const filesystem::path &filename)
 {
-  const auto conf = config::ReadFile(filename);
-  InitLog(conf);
+  if (!g_init)
+  {
+    const auto conf = config::ReadFile(filename);
+    InitLog(conf);
+    g_init = true;
+  }
 }
 //--------------------------------------------------------------------------------------------
 void Logger::DeInit()
@@ -313,6 +322,8 @@ void Logger::DeInit()
 
   // Remove all sinks
   core->remove_all_sinks();
+
+  g_init = false;
 }
 //--------------------------------------------------------------------------------------------
 }  // namespace logger

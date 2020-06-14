@@ -106,6 +106,7 @@ TEST_F(LogTest, SeverityFromText)
 
 TEST_F(LogTest, InvalidFile)
 {
+  common::logger::Logger::DeInit();
   ASSERT_ANY_THROW(common::logger::Logger::InitFromFile("C:\\test.txt"));
 }
 

@@ -19,6 +19,8 @@
 // error
 #include <cmntype/error/error.h>
 
+#include <cmntype/config.h>
+
 namespace common
 {
 namespace curl
@@ -51,7 +53,7 @@ class CurlError : public error::Error
 }  // namespace common
 
 #define THROW_CURL_SETOPT_ERROR(opt,value,curl_code) \
-  throw common::curl::CurlError(opt, value, curl_code, __FILE__, __PRETTY_FUNCTION__, __LINE__)
+  throw common::curl::CurlError(opt, value, curl_code, __FILE__, FUNCNAME, __LINE__)
 
 #define THROW_CURL_ERROR(t) \
-  throw common::curl::CurlError(t, __FILE__, __PRETTY_FUNCTION__, __LINE__)
+  throw common::curl::CurlError(t, __FILE__, FUNCNAME, __LINE__)

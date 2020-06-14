@@ -8,6 +8,8 @@
 
 #include <cmntype/curl/curl_error.h>
 
+#include <cmntype/config.h>
+
 TEST(TestCurl, CurlThrowSetOptError)
 {
   constexpr uint32_t opt = 1;
@@ -23,8 +25,8 @@ TEST(TestCurl, CurlThrowSetOptError)
   {
     ASSERT_EQ(error.GetFileName(), __FILE__);
     ASSERT_EQ(error.GetText(), text);
-    ASSERT_EQ(error.GetLine(), 20);
-    ASSERT_EQ(error.GetFunction(), __PRETTY_FUNCTION__); 
+    ASSERT_EQ(error.GetLine(), 22);
+    ASSERT_EQ(error.GetFunction(), FUNCNAME); 
   }
 }
 
@@ -41,8 +43,8 @@ TEST(TestCurl, CurlThrowCode)
   {
     ASSERT_EQ(error.GetFileName(), __FILE__);
     ASSERT_EQ(error.GetText(), text);
-    ASSERT_EQ(error.GetLine(), 38);
-    ASSERT_EQ(error.GetFunction(), __PRETTY_FUNCTION__); 
+    ASSERT_EQ(error.GetLine(), 40);
+    ASSERT_EQ(error.GetFunction(), FUNCNAME); 
   }
 }
 
@@ -59,8 +61,8 @@ TEST(TestCurl, CurlThrowText)
   {
     ASSERT_EQ(error.GetFileName(), __FILE__);
     ASSERT_EQ(error.GetText(), text);
-    ASSERT_EQ(error.GetLine(), 56);
-    ASSERT_EQ(error.GetFunction(), __PRETTY_FUNCTION__); 
+    ASSERT_EQ(error.GetLine(), 58);
+    ASSERT_EQ(error.GetFunction(), FUNCNAME); 
   }
 }
 
