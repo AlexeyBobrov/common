@@ -29,7 +29,7 @@ namespace test
     <logger>
       <stdout>true</stdout>
       <time>local</time>
-      <level>debug</level>
+      <level>trace</level>
       <workdir>log</workdir>
       <filename>logger.%N.log</filename>
       <rotation>
@@ -76,11 +76,14 @@ TestEnvironment::~TestEnvironment()
 void TestEnvironment::SetUp()
 {
   httpServer_->Start(); 
+  COMMON_LOG_INFO() << "Http server started";
 }
 
 void TestEnvironment::TearDown()
 {
+  COMMON_LOG_INFO() << "Http server stopping";
   httpServer_->Stop();
+  COMMON_LOG_INFO() << "Http server stopped";  
 }
 
 std::shared_ptr<http::HttpServer> TestEnvironment::GetHttpServer()

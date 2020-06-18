@@ -13,262 +13,141 @@
 #include <boost/asio.hpp>
 #include <boost/assert.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/thread.hpp>
+#include <boost/format.hpp>
 
 // this
 #include <cmntype/http/http_server.h>
 #include <cmntype/http/types.h>
 #include <cmntype/http/http_response.h>
+#include <cmntype/http/session.h>
 #include <cmntype/logger/logger.h>
 #include <cmntype/thread/thread_safe.h>
 #include <cmntype/common/stopwatch.h>
+#include <cmntype/error/error.h>
 
-// to delete
-#include <iostream>
 
 namespace common
 {
 namespace http
 {
-namespace
-{
-// send
-template <typename Stream>
-struct Send
-{
-  Stream& stream_;
-  bool& close_;
-  boost::beast::error_code& ec_;
-
-  explicit Send( Stream& stream,
-      bool& close,
-      boost::beast::error_code& ec)
-    : stream_(stream)
-    , close_(close)
-    , ec_(ec)
-  {
-  }
-  
-  template <bool isRequest, class Body, class Fields>
-  void operator()(boost::beast::http::message<isRequest, Body, Fields>& msg) const
-  {
-    // Determine if we should close the connection after
-    close_ = msg.need_eof();
-
-    // We need the serializer here because the serializer requires
-    // a non-const file_body, and the message oriented version of
-    // http::write only works with const messages.
-    boost::beast::http::serializer<isRequest, Body, Fields> sr{msg};
-    boost::beast::http::write(stream_, sr, ec_);
-  }
-};
-
-
-}
-HttpServer::HttpServer(HttpServer&&) = default;
-HttpServer& HttpServer::operator=(HttpServer&&) = default;
 
 using Mutex = std::shared_mutex;
 
-class HttpServer::Impl final
+class Listener : public std::enable_shared_from_this<Listener>
 {
 public:
-  explicit Impl(const std::string_view address, std::uint16_t port, std::uint16_t threads)
-  : ip_(address)
-  , port_(port)
-  , protocol_(boost::asio::ip::make_address(ip_.data()), port_)
-  , pool_(threads)
-  , io_{1}
+  explicit Listener(boost::asio::io_context& ioc,
+      boost::asio::ip::tcp::endpoint endpoint, Handlers& handlers)
+  : io_{ioc}
+  , endpoint_{endpoint}
+  , acceptor_{boost::asio::make_strand(ioc)}
+  , handlers_{handlers}
   {
+    
   }
-  
-  // Start http server
   void Start()
   {
-    exit_ = false;
-
-    std::thread t{std::bind(&Impl::Run, this)};
-    worker_ = std::make_unique<thread::ThreadSafe>(std::move(t));
-    
-    COMMON_LOG_INFO() << "Start http server, ip = " << ip_.data() << ", port = " << port_;
-    
-  }
-
-  // thread acceptor
-  void Run()
-  {
-    COMMON_LOG_INFO() << "Start working thread";
-
-    try
-    {
-      acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(io_, protocol_);
-      auto socket = std::make_shared<boost::asio::ip::tcp::socket>(io_);
-      
-      COMMON_LOG_DEBUG() << "Waiting new connection";
-
-      acceptor_->async_accept(*socket, boost::bind(&Impl::Accept, this, boost::asio::placeholders::error, socket));
-      
-      while (!exit_)
-      {
-        io_.run();
-
-        std::this_thread::sleep_for(waitThr_);
-      }
-    }
-    catch (const std::exception& err)
-    {
-      COMMON_LOG_ERROR() << "Error acceptor thread: '" << err.what() << "'";
-    }
-
-    COMMON_LOG_INFO() << "Complete working thread.";
-  }
-
-  void Accept(const boost::system::error_code& error,
-      std::shared_ptr<boost::asio::ip::tcp::socket> socket)
-  {
-    if (error)
-    {
-      COMMON_LOG_ERROR() << "Error accepting connection: " << error.message();
-    }
-
-    COMMON_LOG_INFO() << "New connection accepted";
-
-    boost::asio::post(pool_, std::bind(&Impl::DoSession, this, socket));
-      
-    auto socketNew = std::make_shared<boost::asio::ip::tcp::socket>(io_);
-    acceptor_->async_accept(*socketNew, boost::bind(&Impl::Accept, this, boost::asio::placeholders::error, socket));
-  }
-
-  // The process session
-  void DoSession(std::shared_ptr<boost::asio::ip::tcp::socket> socket)
-  {
-    BOOST_ASSERT_MSG(socket, "Socket pointer cannot be null");
-
-    COMMON_LOG_INFO() << "Start processing new session"; 
-    
-    bool close{false};
-    boost::beast::error_code error;
-
-    // buffer for read
-    boost::beast::flat_buffer buffer;
-
-    // functional object for response
-    Send<boost::asio::ip::tcp::socket> sender{*socket, close, error};
-
-    while (!exit_)
-    {
-      // Read a request
-      HttpRequest request;
-      boost::beast::http::read(*socket, buffer, request, error);
-
-      if (error == boost::beast::http::error::end_of_stream)
-      {
-        break;
-      }
-
-      if (error)
-      {
-        COMMON_LOG_ERROR() << "Error on read: " << error.message();
-        return;
-      }
-
-      // dispatch message
-      Dispatch<Send<boost::asio::ip::tcp::socket>>(request, std::ref(sender));
-
-      if (error)
-      {
-        COMMON_LOG_ERROR() << "Error sending response";
-      }
-    }
+    COMMON_LOG_DEBUG() << "Starting the listener";
 
     boost::beast::error_code ec;
-    socket->shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
-    COMMON_LOG_INFO() << "Complete processing session";
-  }
+    acceptor_.open(endpoint_.protocol(), ec);
+    THROW_IF_ERROR(ec);
 
-  template <typename Sender>
-  void Dispatch(HttpRequest request, Sender& sender)
-  {
-    std::shared_lock<Mutex> lock(m_);
+    acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
+    THROW_IF_ERROR(ec);
 
-    const auto& uri = request.target();
-    const auto& verb = request.method();
+    acceptor_.bind(endpoint_, ec);
+    THROW_IF_ERROR(ec);
 
-    COMMON_LOG_TRACE() << "Search handlers for uri '" << uri << "', method  '" << verb << "'";
+    acceptor_.listen(boost::asio::socket_base::max_listen_connections, ec);
+    THROW_IF_ERROR(ec);
 
-    auto handlersUri = handlers_.equal_range(std::string(uri));
-    
-    RequestHandler handler;
+    COMMON_LOG_INFO() << "Listener is started";
 
-    if (std::cend(handlers_) != handlersUri.first)
-    {
-      for (auto it = handlersUri.first; it != handlersUri.second; ++it)
-      {
-        if (it->second.method == verb)
-        {
-          handler = it->second.handler;
-        }
-      }
-    }
+    stop_ = false;
 
-    if (handler)
-    {
-      Stopwatch watch;
-      auto response = handler(request);
-      COMMON_LOG_TRACE() << "Request processing completed " << (watch.Get() * 1000.0) << " ms" ;
-      sender(response);
-    }
-    else
-    {
-      COMMON_LOG_WARNING() << "Not found handler for uri '" << uri << "', method '" << verb << "'";
-      auto response = MakeResponseForNotFound(request, "application/json", "UTF-8", "not found");
-      sender(response);
-    }
-    
-    COMMON_LOG_TRACE() << "Complete dispatch request";
+    Accept();
+
   }
 
   void Stop()
   {
-    if (!stopped_)
-    {
-      exit_ = true;
-      io_.stop();
+    COMMON_LOG_DEBUG() << "Stoping the listener";
+    
+    acceptor_.cancel();
+    acceptor_.close();
+    stop_ = true;
 
-      if (acceptor_)
-      {
-        acceptor_->cancel();
-        acceptor_->close();
-        acceptor_.reset();
-      }
-      if (worker_)
-      {
-        worker_->Join();
-        worker_.reset();
-      }
-
-      pool_.stop();
-      pool_.join();
-
-      stopped_ = true;
-    }
+    COMMON_LOG_INFO() << "Listener is stopped";
   }
 
- 
-  ~Impl()
+  void SetHandlers(const Handlers& handlers)
   {
-    Stop();
+    std::unique_lock<Mutex> lock{m_};
+
+    handlers_ = handlers;
+  }
+
+private:
+  void Accept()
+  {
+    acceptor_.async_accept(boost::asio::make_strand(io_), boost::beast::bind_front_handler(&Listener::OnAccept, shared_from_this()));
+  }
+  
+  void OnAccept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
+  {
+    if (ec)
+    {
+      COMMON_LOG_ERROR() << "accept: " << ec.message();
+      if (stop_)
+      {
+        return;
+      }
+    }
+    else
+    {
+      std::shared_ptr<Session> session;
+      {
+        std::shared_lock<Mutex> lock{m_};
+        session = std::make_shared<Session>(std::move(socket), handlers_);
+      }
+      session->Run();
+    }
+
+    Accept();
+  }
+
+private:
+  boost::asio::io_context& io_;
+  boost::asio::ip::tcp::endpoint endpoint_;
+  boost::asio::ip::tcp::acceptor acceptor_;
+  Handlers handlers_;
+  std::atomic<bool> stop_{false};
+  Mutex m_;
+  
+};
+
+class HttpServer::Impl final
+{
+public:
+  Impl(const std::string_view address, std::uint16_t port, std::uint16_t threads)
+  : io_{threads}
+  , protocol_{boost::asio::ip::make_address(address.data()), port}
+  , listener_{std::make_shared<Listener>(io_, protocol_, handlers_)}
+  , countThr_{threads}
+  , exit_{false}
+  {
   }
 
   void AddRequestHandler(const std::string_view uri, boost::beast::http::verb method, RequestHandler handler)
   {
-    std::unique_lock<Mutex> lock(m_);
-
-    COMMON_LOG_TRACE() << "Adding handler for uri = '" << std::string(uri) << "', method = '" << method << "'";;
+    COMMON_LOG_TRACE() << "Adding handler uri = '" << std::string(uri) << "', method = '" << method << "'";
 
     auto handlers = handlers_.equal_range(std::string(uri));
 
-    Handlers::iterator contextIt = std::end(handlers_);
-    
+    auto contextIt = std::end(handlers_);
+
     for (auto it = handlers.first; it != handlers.second; ++it)
     {
       if (it->second.method == method)
@@ -287,22 +166,50 @@ public:
       contextIt->second.handler = handler;
     }
 
-    COMMON_LOG_TRACE() << "count handlers: " << handlers_.size();
-  }
-private:
-  std::string_view ip_;
-  std::uint16_t port_;
-  boost::asio::ip::tcp::endpoint protocol_;
-  std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor_;
-  std::atomic<bool> exit_ { false };
-  std::atomic<bool> stopped_ { false };
-  Handlers handlers_;
-  boost::asio::thread_pool pool_;
-  std::unique_ptr<thread::ThreadSafe> worker_;
-  Mutex m_;
-  boost::asio::io_service io_;
+    listener_->SetHandlers(handlers_);
 
-  static constexpr std::chrono::milliseconds waitThr_ {60};
+    COMMON_LOG_TRACE() << "Total count handlers: " << handlers_.size();
+  }
+
+  void Start()
+  {
+    if (io_.stopped())
+    {
+      io_.restart();
+    }
+
+    listener_->Start();
+
+    for (std::uint16_t i = 0; i < countThr_; i++)
+    {
+      threads_.create_thread([this]
+          {
+            while (!exit_)
+            {
+              io_.run();
+              std::this_thread::sleep_for(waitMs_);
+            }
+          });
+    }
+  }
+
+  void Stop()
+  {
+    listener_->Stop();
+    io_.stop();
+    exit_ = true;
+    threads_.join_all();
+  }
+
+private:
+  boost::asio::io_context io_;
+  Handlers handlers_;
+  boost::asio::ip::tcp::endpoint protocol_;
+  std::shared_ptr<Listener> listener_;
+  std::uint16_t countThr_;
+  std::atomic<bool> exit_;
+  boost::thread_group threads_;
+  static constexpr std::chrono::milliseconds waitMs_{60};
 };
 
 HttpServer::HttpServer(const std::string_view address, std::uint16_t port, std::uint16_t threads)
@@ -324,7 +231,7 @@ HttpServer::~HttpServer()
 {
 }
 
-void HttpServer::AddRequestHandler( const std::string_view uri, boost::beast::http::verb method, RequestHandler handler)
+void HttpServer::AddRequestHandler(const std::string_view uri, boost::beast::http::verb method, RequestHandler handler)
 {
   impl_->AddRequestHandler(uri, method, handler);
 }

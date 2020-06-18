@@ -70,7 +70,7 @@ namespace log = boost::log;
 using sev_log_t = sources::severity_logger_mt<Severity>;
 using file_sink_t = sinks::synchronous_sink<sinks::text_file_backend>;
 using file_sink_ptr_t = boost::shared_ptr<file_sink_t>;
-using debug_sink_t = sinks::asynchronous_sink<sinks::text_ostream_backend>;
+using debug_sink_t = sinks::synchronous_sink<sinks::text_ostream_backend>;
 using debug_sink_ptr_t = boost::shared_ptr<debug_sink_t>;
 using debug_sink_ptr_t = boost::shared_ptr<debug_sink_t>;
 //--------------------------------------------------------------------------------------------

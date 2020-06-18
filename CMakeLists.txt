@@ -6,6 +6,10 @@ include(cmake/external.cmake)
 
 project (${ProjectName} VERSION ${PROJECT_FULL_VERSION})
 
+include(GoogleTest)
+include(CTest)
+
+
 # set specify the c++ standart
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -44,6 +48,7 @@ set (SOURCES
   src/logger/utility.cpp
   src/error/error.cpp
   src/thread/pool_thread.cpp
+  src/http/session.cpp
   src/http/http_server.cpp
   src/http/http_response.cpp
   )
@@ -61,7 +66,6 @@ set (SOURCES_TEST
     )
 
 set (LIBRARIES
-    pthread
     Boost::log_setup
     Boost::log
     Boost::system
@@ -166,6 +170,8 @@ export(EXPORT ${ProjectName}Targets
   FILE "${CMAKE_CURRENT_BINARY_DIR}/${ProjectName}Targets.cmake"
   )
 
+enable_testing()
+
 add_executable(${ProjectName}_test ${INCLUDES} ${SOURCES_TEST} test/test_main.cpp)
 target_compile_options(${ProjectName}_test
   PUBLIC 
@@ -188,10 +194,7 @@ target_include_directories(${ProjectName}_test
   )
   
 target_link_libraries(${ProjectName}_test ${LIBRARIES_TEST})
-
-add_custom_target(test
-  COMMAND ${ProjectName}_test
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
+gtest_discover_tests(${ProjectName}_test)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
   if (NOT LLVM_PROFDATA OR NOT LLVM_COV)

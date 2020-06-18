@@ -31,9 +31,22 @@ class Error : public std::runtime_error
   std::string fileName_;
   std::string text_;
 };
+
+template <typename ErrorType>
+void ThrowIfError(const ErrorType& err, const std::string& funcName, std::uint32_t line, const std::string& fileName)
+{
+  if (err)
+  {
+    throw Error(funcName, line, fileName, err.message());
+  }
+}
+
 }  // namespace error
 }  // namespace common
 
 
-#define THROW_COMMON_ERROR( text ) \
+#define THROW_COMMON_ERROR(text) \
   throw common::error::Error(FUNCNAME, __LINE__, __FILE__, text)
+
+#define THROW_IF_ERROR(ec) common::error::ThrowIfError(ec, FUNCNAME, __LINE__, __FILE__)
+
