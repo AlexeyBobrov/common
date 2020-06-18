@@ -99,6 +99,11 @@ set_target_properties(${ProjectName} PROPERTIES
   POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS}
   )
 
+if (MSVC)
+    target_compile_options(${ProjectName} PUBLIC "/Zc:__cplusplus")
+    target_compile_features(${ProjectName} PUBLIC cxx_std_17)
+endif()
+
 target_link_libraries(${ProjectName} PUBLIC ${LIBRARIES})
 
 set_property(TARGET ${ProjectName} PROPERTY VERSION "${PROJECT_FULL_VERSION}")
@@ -178,6 +183,11 @@ target_compile_options(${ProjectName}_test
   $<$<CXX_COMPILER_ID:Clang>: -g -O0 -Wall -fcoverage-mapping -fprofile-instr-generate>
   $<$<CXX_COMPILER_ID:GNU>: -g -O0 -Wall -fprofile-arcs -ftest-coverage>
   )
+
+if (MSVC)
+    target_compile_options(${ProjectName}_test PUBLIC "/Zc:__cplusplus")
+    target_compile_features(${ProjectName}_test PUBLIC cxx_std_17)
+endif()
 
 target_link_options(${ProjectName}_test
   PUBLIC 
