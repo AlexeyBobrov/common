@@ -25,7 +25,7 @@ function init()
   mkdir -p $install_dir
   cd $install_dir
 
-  cmake -DCMAKE_INSTALL_PREFIX:PATH="${install_dir}" .. --log-level=$log_level -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=/home/alexey/tools/vcpkg/scripts/buildsystems/vcpkg.cmake
+  cmake -DCMAKE_INSTALL_PREFIX:PATH="${install_dir}" .. --log-level=$log_level -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
 }
 
 
