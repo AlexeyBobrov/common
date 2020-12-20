@@ -25,7 +25,8 @@ function init()
   mkdir -p $install_dir
   cd $install_dir
 
-  cmake -DCMAKE_INSTALL_PREFIX:PATH="${install_dir}" .. --log-level=$log_level -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
+  cmake --log-level=$log_level -DCMAKE_INSTALL_PREFIX:PATH="${install_dir}" .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-linux-dynamic
+
 }
 
 

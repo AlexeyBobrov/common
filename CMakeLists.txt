@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.3)
 
+
 include(cmake/env.cmake)
 include(cmake/version.cmake)
 include(cmake/external.cmake)
@@ -26,9 +27,10 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 find_package(CURL CONFIG REQUIRED)
 
 # boost configuration
-find_package(Boost 1.68 COMPONENTS log_setup log system thread date_time filesystem program_options unit_test_framework REQUIRED)
+find_package(Boost 1.70 COMPONENTS log_setup log system thread date_time filesystem program_options unit_test_framework REQUIRED)
 
 add_definitions(-DBOOST_LOG_DYN_LINK)
+add_definitions( -DBOOST_ALL_NO_LIB )
 
 # gtest
 find_package(GTest REQUIRED CONFIG)
@@ -66,14 +68,7 @@ set (SOURCES_TEST
     )
 
 set (LIBRARIES
-    Boost::log_setup
-    Boost::log
-    Boost::system
-    Boost::thread
-    Boost::date_time
-    Boost::filesystem
-    Boost::program_options
-    Boost::unit_test_framework
+    ${Boost_LIBRARIES}
     CURL::libcurl
     )
 
@@ -103,6 +98,7 @@ if (MSVC)
     target_compile_options(${ProjectName} PUBLIC "/Zc:__cplusplus")
     target_compile_features(${ProjectName} PUBLIC cxx_std_17)
 endif()
+
 
 target_link_libraries(${ProjectName} PUBLIC ${LIBRARIES})
 
@@ -192,7 +188,7 @@ endif()
 target_link_options(${ProjectName}_test
   PUBLIC 
   $<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>
-  $<$<CXX_COMPILER_ID:GNU>:--coverage>
+  $<$<CXX_COMPILER_ID:GNU>:--coverage -v>
   )
 
 target_include_directories(${ProjectName}_test
@@ -203,7 +199,8 @@ target_include_directories(${ProjectName}_test
   $<BUILD_INTERFACE:${Boost_INCLUDE_DIRS}>
   )
   
-target_link_libraries(${ProjectName}_test ${LIBRARIES_TEST})
+target_link_libraries(${ProjectName}_test PUBLIC ${LIBRARIES_TEST})
+
 gtest_discover_tests(${ProjectName}_test)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
