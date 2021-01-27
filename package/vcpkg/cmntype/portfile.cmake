@@ -1,11 +1,8 @@
-include(vcpkg_common_functions)
-
 vcpkg_from_git(
   OUT_SOURCE_PATH SOURCE_PATH
   URL https://github.com/AlexeyBobrov/common
   REF ddd897bf0530fd529bbc6fbc5bf1ed5c59dacce9
   )
-
 
 vcpkg_configure_cmake(
   SOURCE_PATH ${SOURCE_PATH}
