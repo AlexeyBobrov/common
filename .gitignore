@@ -35,6 +35,7 @@ build/
 3rdparty/
 log/
 Testing/
+.vs/
 
 # indexed files
 tags

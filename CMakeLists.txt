@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.3)
 
+
 include(cmake/env.cmake)
 include(cmake/version.cmake)
 include(cmake/external.cmake)
@@ -22,9 +23,10 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 find_package(CURL CONFIG REQUIRED)
 
 # boost configuration
-find_package(Boost 1.68 COMPONENTS log_setup log system thread date_time filesystem program_options unit_test_framework REQUIRED)
+find_package(Boost 1.70 COMPONENTS log_setup log system thread date_time filesystem program_options unit_test_framework REQUIRED)
 
 add_definitions(-DBOOST_LOG_DYN_LINK)
+add_definitions( -DBOOST_ALL_NO_LIB )
 
 # configure file version
 configure_file(
@@ -59,14 +61,7 @@ set (SOURCES_TEST
     )
 
 set (LIBRARIES
-    Boost::log_setup
-    Boost::log
-    Boost::system
-    Boost::thread
-    Boost::date_time
-    Boost::filesystem
-    Boost::program_options
-    Boost::unit_test_framework
+    ${Boost_LIBRARIES}
     CURL::libcurl
     )
 
@@ -96,6 +91,7 @@ if (MSVC)
     target_compile_options(${ProjectName} PUBLIC "/Zc:__cplusplus")
     target_compile_features(${ProjectName} PUBLIC cxx_std_17)
 endif()
+
 
 target_link_libraries(${ProjectName} PUBLIC ${LIBRARIES})
 
